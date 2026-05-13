@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: somosbarrio-backend
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:somosbarrio_dev}
+    username: ${DB_USER:somosbarrio_app}
+    password: ${DB_PASSWORD:somosbarrio_app_dev}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        default_schema: public
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:al.slake@gmail.com}
+    password: ${MAIL_PASSWORD:xsbz nyys pbgw tydg}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+  servlet:
+    multipart:
+      max-file-size: ${UPLOAD_MAX_MB:20}MB
+      max-request-size: 25MB
+
+server:
+  port: 8380
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    mail:
+      enabled: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:cambia-esto-en-produccion-con-64-chars-minimo}
+    access-ttl-min: ${JWT_ACCESS_TTL_MIN:15}
+    refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:7}
+  cors:
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:5173}
+  upload:
+    root: ${UPLOAD_ROOT:./uploads}
+    max-mb: ${UPLOAD_MAX_MB:20}
+  template:
+    root: ${TEMPLATE_ROOT:C:/Users/alfon/Desktop/PROYECTO_FINAL_SALIDA_INTERMEDIA/somosbarrio-backend-benja/TEMPLATE_ROOT}
+  documents:
+    libreoffice-path: ${LIBREOFFICE_PATH:C:/Program Files/LibreOffice/program/soffice.exe}
+  mail:
+    from-name: ${MAIL_FROM_NAME:Programa Somos Barrio}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    cl.somosbarrio.backend: INFO
+    org.springframework.web: INFO

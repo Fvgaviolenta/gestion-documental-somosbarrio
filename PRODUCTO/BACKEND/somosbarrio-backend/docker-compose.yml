@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sb_db
+    environment:
+      POSTGRES_DB: somosbarrio
+      POSTGRES_USER: somosbarrio_app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U somosbarrio_app -d somosbarrio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sb_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: somosbarrio
+      DB_USER: somosbarrio_app
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      # Minimo 32 caracteres UTF-8 (ver JwtService). "cambia-esto" rompe el arranque.
+      JWT_SECRET: ${JWT_SECRET:-dev-only-cambia-en-produccion-openssl-rand-base64-64}
+      JWT_ACCESS_TTL_MIN: 15
+      JWT_REFRESH_TTL_DAYS: 7
+      APP_CORS_ORIGINS: http://localhost:5173
+      UPLOAD_ROOT: /app/uploads
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      TEMPLATE_ROOT: /app/templates
+      LIBREOFFICE_PATH: /usr/bin/soffice
+    ports:
+      - "8081:8380"
+    volumes:
+      - uploads_data:/app/uploads
+      - ./templates:/app/templates:ro
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sb_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+volumes:
+  db_data:
+  uploads_data:

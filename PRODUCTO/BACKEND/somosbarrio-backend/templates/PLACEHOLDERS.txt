@@ -1,0 +1,56 @@
+Placeholders para fusionar con los .docx (mismo texto literal en Word). Las claves deben coincidir con
+fields_schema en BD (Flyway V17 actualiza ACTA_MESA_COMUNITARIA e INFORME_TIPO).
+
+--- TABLAS (etiqueta | ":" | valor) ---
+En tablas de varias columnas, pon cada ${clave} solo en la celda donde debe verse el valor generado.
+
+--- IMÁGENES ---
+Formato válido en Word (caracteres < > normales, no &lt; &gt;):
+
+  A) UUID literal del adjunto (tras POST .../attachments):
+     ${IMG:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
+
+  B) Referencia al campo field_values que contiene ese UUID (recomendado con formulario):
+     ${IMG:foto_mesa_uuid}   en ACTA (clave JSON foto_mesa_uuid)
+     ${IMG:foto_informe_uuid} en INFORME (clave JSON foto_informe_uuid)
+
+Flujo actual para colaboradores: crear borrador → POST /api/v1/documents/{id}/attachments (multipart) →
+la respuesta incluye el id del adjunto → guardar ese UUID en field_values (ej. foto_mesa_uuid) antes de
+aprobar. El frontend puede enlazar el control de subida para que rellene ese campo solo.
+
+--- ACTA DE MESA COMUNITARIA — ACTA_MESA_COMUNITARIA_TEMPLATE.docx ---
+
+Texto:
+  ${numero_acta}
+  ${proyecto}
+  ${comuna}
+  ${barrio}
+  ${convocado_por}
+  ${fecha_reunion}
+  ${hora_inicio}
+  ${hora_fin}
+  ${lugar_reunion}
+  ${motivo_objetivo}
+  ${resumen_temas}
+  ${compromisos}
+  ${gestor_barrial}
+  ${contraparte_spd}
+
+Imagen (párrafo que contenga solo uno de estos):
+  ${IMG:foto_mesa_uuid}
+  o ${IMG:<uuid-devuelto-por-la-api-de-adjuntos>}
+
+--- INFORME TIPO — INFORME_TEMPLATE.docx ---
+
+Texto:
+  ${numero_informe}
+  ${mat_asunto}
+  ${fecha_ciudad}
+  ${destinatario_a}
+  ${remitente_de}
+  ${cuerpo_intro}
+  ${revisado_por}
+
+Imagen:
+  ${IMG:foto_informe_uuid}
+  o ${IMG:<uuid-devuelto-por-la-api-de-adjuntos>}
