@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import axios from 'axios'
 
 import { Button } from '@/shared/components/ui/button'
 import { createWorkerReport } from '@/features/reports/api/reports.api'
+import { WorkerFormDraftControls } from '@/features/worker/components/WorkerFormDraftControls'
+import { useWorkerFormDraft } from '@/features/worker/hooks/useWorkerFormDraft'
 import { useDefaultActivityId } from '@/features/worker/hooks/useDefaultActivityId'
 import { useAuthStore } from '@/store/authStore'
 
@@ -58,6 +60,14 @@ export function WorkerReportsPage() {
   const [localOk, setLocalOk] = useState<string | null>(null)
   const photosInputRef = useRef<HTMLInputElement>(null)
   const allocatedUrlsRef = useRef<Set<string>>(new Set())
+
+  const draft = useWorkerFormDraft('reporte', {
+    getValues: useCallback(() => ({ title, description }), [title, description]),
+    applyValues: useCallback((data: { title: string; description: string }) => {
+      setTitle(data.title)
+      setDescription(data.description)
+    }, []),
+  })
 
   useEffect(() => {
     const allocated = allocatedUrlsRef.current
@@ -115,6 +125,7 @@ export function WorkerReportsPage() {
       setTitle('')
       setDescription('')
       clearPhotos()
+      draft.clearDraft()
       setLocalOk('Reporte enviado correctamente.')
     },
   })
@@ -239,9 +250,18 @@ export function WorkerReportsPage() {
           </p>
         ) : null}
 
-        <Button type="submit" disabled={mutation.isPending || photos.length === 0}>
-          {mutation.isPending ? 'Enviando…' : 'Enviar reporte'}
-        </Button>
+        <WorkerFormDraftControls
+          pendingLabel={draft.pendingLabel}
+          notice={draft.notice}
+          onSaveDraft={draft.saveDraft}
+          onRestoreDraft={draft.restoreDraft}
+          onDiscardDraft={draft.discardDraft}
+          submitDisabled={mutation.isPending}
+        >
+          <Button type="submit" disabled={mutation.isPending || photos.length === 0}>
+            {mutation.isPending ? 'Enviando…' : 'Enviar reporte'}
+          </Button>
+        </WorkerFormDraftControls>
       </form>
     </section>
   )
