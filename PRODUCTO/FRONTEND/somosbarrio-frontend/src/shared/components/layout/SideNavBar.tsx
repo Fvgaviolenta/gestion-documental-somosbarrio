@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '@/store/authStore';
+import { SB_COLORS } from '@/shared/constants/colors';
 
 export default function SideNavBar() {
     const location = useLocation();
@@ -20,11 +21,11 @@ export default function SideNavBar() {
                 <p className="text-xs text-on-surface-variant">Portal Institucional</p>
             </div>
             
-            <button className="mb-stack-lg w-full rounded-lg bg-black px-4 py-3 font-semibold text-white flex items-center justify-center gap-2 hover:bg-zinc-700 transition-all active:scale-95 shadow-sm">
+            <button className="mb-stack-lg w-full rounded-lg bg-black px-4 py-3 font-semibold text-white flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all active:scale-95 shadow-sm cursor-pointer text-sm">
                 <span className="material-symbols-outlined text-white text-[20px]">add</span>
-                Nueva Solicitud
+                <span>Nueva Solicitud</span>
             </button>
-            
+           
             <nav className="flex-1 space-y-1">
                 <Link to="/" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined">dashboard</span>
@@ -55,8 +56,8 @@ export default function SideNavBar() {
                 <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-lg bg-black px-3 py-2 text-white transition-colors duration-200 hover:bg-zinc-700"
-                >
+                    style={{ backgroundColor: SB_COLORS.RED }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-white transition-all hover:opacity-90 cursor-pointer">
                     <span className="material-symbols-outlined">logout</span>
                     <span className="text-sm font-semibold">Cerrar sesión</span>
                 </button>
