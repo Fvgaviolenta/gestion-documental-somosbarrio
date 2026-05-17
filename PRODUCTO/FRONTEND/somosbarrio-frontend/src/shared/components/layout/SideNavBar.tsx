@@ -21,10 +21,13 @@ export default function SideNavBar() {
                 <p className="text-xs text-on-surface-variant">Portal Institucional</p>
             </div>
             
-            <button className="mb-stack-lg w-full rounded-lg bg-black px-4 py-3 font-semibold text-white flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all active:scale-95 shadow-sm cursor-pointer text-sm">
-                <span className="material-symbols-outlined text-white text-[20px]">add</span>
+            <Link
+                to="/documents/new"
+                className="mb-stack-lg flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-zinc-800 active:scale-95"
+            >
+                <span className="material-symbols-outlined text-[20px] text-white">add</span>
                 <span>Nueva Solicitud</span>
-            </button>
+            </Link>
            
             <nav className="flex-1 space-y-1">
                 <Link to="/" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
@@ -32,9 +35,14 @@ export default function SideNavBar() {
                     <span className="text-sm font-semibold">Panel de Control</span>
                 </Link>
                 
-                <Link to="/activities" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/activities') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                <Link to="/activities" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${location.pathname.startsWith('/activities') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined">folder_open</span>
                     <span className="text-sm font-semibold">Actividades</span>
+                </Link>
+
+                <Link to="/documents" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${location.pathname.startsWith('/documents') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                    <span className="material-symbols-outlined">description</span>
+                    <span className="text-sm font-semibold">Documentos</span>
                 </Link>
                 
                 <Link to="/reports" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/reports') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>

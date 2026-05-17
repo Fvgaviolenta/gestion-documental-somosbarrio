@@ -1,4 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+
+import { ExportDocumentsDialog } from '@/features/documents/components/ExportDocumentsDialog'
 import { api } from '@/shared/lib/axios'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -31,6 +34,7 @@ export function HomePage() {
     const [activities, setActivities] = useState<Activity[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [exportOpen, setExportOpen] = useState(false)
 
     useEffect(() => {
         let canceled = false
@@ -140,13 +144,20 @@ export function HomePage() {
                             <p className="text-base text-on-surface-variant">Visualización en tiempo real del estado operativo de Somos Barrio.</p>
                         </div>
                         <div className="flex gap-stack-sm">
-                            <button className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 bg-black text-white hover:bg-zinc-800 transition-colors cursor-pointer">
+                            <button
+                                type="button"
+                                onClick={() => setExportOpen(true)}
+                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 bg-black text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                            >
                                 <span className="material-symbols-outlined text-[18px]">download</span> Exportar Datos
                             </button>
-                            <button className="px-4 py-2 bg-black text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-zinc-800 transition-all cursor-pointer shadow-sm active:scale-95">
-                                <span className="material-symbols-outlined text-white text-[18px]">add</span> 
+                            <Link
+                                to="/documents/new"
+                                className="px-4 py-2 bg-black text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-zinc-800 transition-all cursor-pointer shadow-sm active:scale-95"
+                            >
+                                <span className="material-symbols-outlined text-white text-[18px]">add</span>
                                 Nuevo Trámite
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </section>
@@ -215,15 +226,21 @@ export function HomePage() {
                         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
                             <h4 className="text-sm font-semibold text-sb-dark-purple mb-stack-md">Accesos Rápidos</h4>
                             <div className="grid grid-cols-2 gap-stack-sm">
-                                {[
-                                    { icon: 'description', label: 'Docs' },
-                                    { icon: 'person_search', label: 'Usuarios' }
-                                ].map((item, i) => (
-                                    <button key={i} className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer">
-                                        <span className="material-symbols-outlined text-white mb-1 group-hover:scale-110 transition-transform">{item.icon}</span>
-                                        <span className="text-xs font-medium">{item.label}</span>
-                                    </button>
-                                ))}
+                                <Link
+                                    to="/documents"
+                                    className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer"
+                                >
+                                    <span className="material-symbols-outlined text-white mb-1 group-hover:scale-110 transition-transform">description</span>
+                                    <span className="text-xs font-medium">Docs</span>
+                                </Link>
+                                <button
+                                    type="button"
+                                    className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer"
+                                    title="Próximamente"
+                                >
+                                    <span className="material-symbols-outlined text-white mb-1 group-hover:scale-110 transition-transform">person_search</span>
+                                    <span className="text-xs font-medium">Usuarios</span>
+                                </button>
                             </div>
                         </div>
 
@@ -240,6 +257,8 @@ export function HomePage() {
                     </div>
                 </section>
             </div>
+
+            <ExportDocumentsDialog open={exportOpen} onClose={() => setExportOpen(false)} />
         </div>
     );
 }

@@ -5,6 +5,9 @@ import { WorkerLoginPage } from '@/features/auth/pages/WorkerLoginPage'
 import { ActivitiesListPage } from '@/features/activities/pages/ActivitiesListPage'
 import { CreateActivityPage } from '@/features/activities/pages/CreateActivityPage'
 import { EditActivityPage } from '@/features/activities/pages/EditActivityPage'
+import { CreateDocumentPage } from '@/features/documents/pages/CreateDocumentPage'
+import { DocumentDetailPage } from '@/features/documents/pages/DocumentDetailPage'
+import { DocumentsListPage } from '@/features/documents/pages/DocumentsListPage'
 import { HomePage } from '@/features/home/pages/HomePage'
 import { WorkerReportsPage } from '@/features/reports/pages/WorkerReportsPage'
 import { WorkerConfigPage } from '@/features/worker-menu/pages/WorkerConfigPage'
@@ -44,6 +47,9 @@ export const router = createBrowserRouter([
       { path: 'activities/new', element: <CreateActivityPage /> },
       { path: 'activities/:id/edit', element: <EditActivityPage /> },
       { path: 'reports', element: <WorkerReportsPage /> },
+      { path: 'documents', element: <DocumentsListPage /> },
+      { path: 'documents/new', element: <CreateDocumentPage /> },
+      { path: 'documents/:id', element: <DocumentDetailPage /> },
     ],
   },
   {
