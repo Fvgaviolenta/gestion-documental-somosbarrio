@@ -1,7 +1,11 @@
-import { type FormEvent, useEffect, useRef, useState, type RefObject } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { DateInput } from '@/shared/components/DateInput'
 import { Button } from '@/shared/components/ui/button'
+import type { MinuteFormContent } from '@/features/minutes/types'
+import { WorkerFormDraftControls } from '@/features/worker/components/WorkerFormDraftControls'
+import { useWorkerFormDraft } from '@/features/worker/hooks/useWorkerFormDraft'
 import { WorkerMinutesHistoryList } from '@/features/worker-minutes/components/WorkerMinutesHistoryList'
 import {
   formatMinuteError,
@@ -89,6 +93,69 @@ export function WorkerMinutesPage() {
   const [mediosVerificadores, setMediosVerificadores] = useState<UploadedImage[]>([])
   const [registroFotografico, setRegistroFotografico] = useState<UploadedImage[]>([])
 
+  const getTextFields = useCallback(
+    (): MinuteFormContent => ({
+      numeroActa,
+      proyecto,
+      comuna,
+      barrio,
+      reunionConvocadaPor,
+      fechaActividad,
+      horaInicio,
+      horaTermino,
+      lugarReunion,
+      motivoObjetivo,
+      resumenTemas,
+      compromisosResponsabilidades,
+      gestorBarrial,
+      accion,
+      contraparteSpd,
+      accionContraparte,
+    }),
+    [
+      numeroActa,
+      proyecto,
+      comuna,
+      barrio,
+      reunionConvocadaPor,
+      fechaActividad,
+      horaInicio,
+      horaTermino,
+      lugarReunion,
+      motivoObjetivo,
+      resumenTemas,
+      compromisosResponsabilidades,
+      gestorBarrial,
+      accion,
+      contraparteSpd,
+      accionContraparte,
+    ],
+  )
+
+  const applyTextFields = useCallback((data: MinuteFormContent) => {
+    setNumeroActa(data.numeroActa)
+    setProyecto(data.proyecto)
+    setComuna(data.comuna)
+    setBarrio(data.barrio)
+    setReunionConvocadaPor(data.reunionConvocadaPor)
+    setFechaActividad(data.fechaActividad)
+    setHoraInicio(data.horaInicio)
+    setHoraTermino(data.horaTermino)
+    setLugarReunion(data.lugarReunion)
+    setMotivoObjetivo(data.motivoObjetivo)
+    setResumenTemas(data.resumenTemas)
+    setCompromisosResponsabilidades(data.compromisosResponsabilidades)
+    setGestorBarrial(data.gestorBarrial)
+    setAccion(data.accion)
+    setContraparteSpd(data.contraparteSpd)
+    setAccionContraparte(data.accionContraparte)
+  }, [])
+
+  const draft = useWorkerFormDraft('acta', {
+    getValues: getTextFields,
+    applyValues: applyTextFields,
+  })
+
   useEffect(() => {
     const allocatedUrls = allocatedUrlsRef.current
     return () => {
@@ -165,29 +232,13 @@ export function WorkerMinutesPage() {
 
     submitMutation.mutate(
       {
-        fields: {
-          numeroActa,
-          proyecto,
-          comuna,
-          barrio,
-          reunionConvocadaPor,
-          fechaActividad,
-          horaInicio,
-          horaTermino,
-          lugarReunion,
-          motivoObjetivo,
-          resumenTemas,
-          compromisosResponsabilidades,
-          gestorBarrial,
-          accion,
-          contraparteSpd,
-          accionContraparte,
-        },
+        fields: getTextFields(),
         files: collectAttachmentFiles(),
       },
       {
         onSuccess: () => {
           clearForm()
+          draft.clearDraft()
           setSubmitOk('Acta enviada a revisión correctamente.')
         },
         onError: (error) => setSubmitError(formatMinuteError(error)),
@@ -286,11 +337,10 @@ export function WorkerMinutesPage() {
               <tr>
                 <td className={cellLabel}>Fecha de actividad</td>
                 <td className={cellInput}>
-                  <input
-                    type="date"
+                  <DateInput
                     className={inputClass}
                     value={fechaActividad}
-                    onChange={(e) => setFechaActividad(e.target.value)}
+                    onChange={setFechaActividad}
                     required
                   />
                 </td>
@@ -613,9 +663,18 @@ export function WorkerMinutesPage() {
           </p>
         ) : null}
 
-        <Button type="submit" disabled={submitMutation.isPending}>
-          {submitMutation.isPending ? 'Enviando…' : 'Enviar a revisión'}
-        </Button>
+        <WorkerFormDraftControls
+          pendingLabel={draft.pendingLabel}
+          notice={draft.notice}
+          onSaveDraft={draft.saveDraft}
+          onRestoreDraft={draft.restoreDraft}
+          onDiscardDraft={draft.discardDraft}
+          submitDisabled={submitMutation.isPending}
+        >
+          <Button type="submit" disabled={submitMutation.isPending}>
+            {submitMutation.isPending ? 'Enviando…' : 'Enviar a revisión'}
+          </Button>
+        </WorkerFormDraftControls>
       </form>
 
       <section className="space-y-3">

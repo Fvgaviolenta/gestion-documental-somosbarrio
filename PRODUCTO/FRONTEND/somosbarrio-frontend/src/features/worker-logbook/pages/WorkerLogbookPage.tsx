@@ -1,10 +1,14 @@
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 
+import { DateInput } from '@/shared/components/DateInput'
 import { Button } from '@/shared/components/ui/button'
+import { formatStoredDateForDisplay } from '@/shared/lib/dateInput'
 import { createDocument, listDocuments } from '@/features/documents/api/documents.api'
+import { WorkerFormDraftControls } from '@/features/worker/components/WorkerFormDraftControls'
+import { useWorkerFormDraft } from '@/features/worker/hooks/useWorkerFormDraft'
 import type { DocumentDto } from '@/features/documents/types'
 import {
   buildBitacoraFieldValues,
@@ -53,6 +57,35 @@ export function WorkerLogbookPage() {
   const [equipo, setEquipo] = useState('Equipo Somos Barrio')
   const [filterDate, setFilterDate] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+
+  const draft = useWorkerFormDraft('bitacora', {
+    getValues: useCallback(
+      () => ({
+        date,
+        relato,
+        eventoRelevante,
+        territorio,
+        equipo,
+      }),
+      [date, relato, eventoRelevante, territorio, equipo],
+    ),
+    applyValues: useCallback(
+      (data: {
+        date: string
+        relato: string
+        eventoRelevante: string
+        territorio: string
+        equipo: string
+      }) => {
+        setDate(data.date)
+        setRelato(data.relato)
+        setEventoRelevante(data.eventoRelevante)
+        setTerritorio(data.territorio)
+        setEquipo(data.equipo)
+      },
+      [],
+    ),
+  })
 
   const historyQuery = useQuery({
     queryKey: ['worker', 'bitacora'],
@@ -108,6 +141,7 @@ export function WorkerLogbookPage() {
       setRelato('')
       setEventoRelevante('')
       setFormError(null)
+      draft.clearDraft()
       await queryClient.invalidateQueries({ queryKey: ['worker', 'bitacora'] })
     },
     onError: (error) => {
@@ -156,12 +190,10 @@ export function WorkerLogbookPage() {
             <label htmlFor="logbook-date" className="mb-1 block text-sm font-medium">
               Fecha
             </label>
-            <input
+            <DateInput
               id="logbook-date"
-              type="date"
-              className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={setDate}
               required
             />
           </div>
@@ -228,9 +260,18 @@ export function WorkerLogbookPage() {
           </p>
         ) : null}
 
-        <Button type="submit" disabled={createMutation.isPending}>
-          {createMutation.isPending ? 'Guardando…' : 'Agregar entrada a bitácora'}
-        </Button>
+        <WorkerFormDraftControls
+          pendingLabel={draft.pendingLabel}
+          notice={draft.notice}
+          onSaveDraft={draft.saveDraft}
+          onRestoreDraft={draft.restoreDraft}
+          onDiscardDraft={draft.discardDraft}
+          submitDisabled={createMutation.isPending}
+        >
+          <Button type="submit" disabled={createMutation.isPending}>
+            {createMutation.isPending ? 'Guardando…' : 'Agregar entrada a bitácora'}
+          </Button>
+        </WorkerFormDraftControls>
       </form>
 
       <section className="space-y-3">
@@ -241,12 +282,10 @@ export function WorkerLogbookPage() {
               <label htmlFor="logbook-filter-date" className="mb-1 block text-sm font-medium">
                 Fecha a filtrar
               </label>
-              <input
+              <DateInput
                 id="logbook-filter-date"
-                type="date"
-                className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2"
                 value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
+                onChange={setFilterDate}
               />
             </div>
             {filterDate ? (
@@ -319,7 +358,9 @@ function LogbookEntryCard({
 }) {
   return (
     <div className="rounded-lg border border-[var(--color-border)] p-3">
-      <p className="text-xs text-[var(--color-muted-foreground)]">{entry.date}</p>
+      <p className="text-xs text-[var(--color-muted-foreground)]">
+        {formatStoredDateForDisplay(entry.date)}
+      </p>
       <p className="mt-1 text-sm font-semibold">{entry.eventoRelevante}</p>
       <p className="mt-1 text-sm">{entry.relato}</p>
       <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
