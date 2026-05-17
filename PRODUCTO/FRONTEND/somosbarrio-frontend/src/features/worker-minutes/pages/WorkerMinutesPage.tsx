@@ -2,6 +2,13 @@ import { type FormEvent, useEffect, useRef, useState, type RefObject } from 'rea
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/shared/components/ui/button'
+import { WorkerMinutesHistoryList } from '@/features/worker-minutes/components/WorkerMinutesHistoryList'
+import {
+  formatMinuteError,
+  useWorkerMinutesList,
+  useWorkerMinutesSubmit,
+} from '@/features/worker-minutes/hooks/useWorkerMinutesSubmit'
+import { useAuthStore } from '@/store/authStore'
 
 function ImagePickerButton({
   inputRef,
@@ -35,42 +42,10 @@ function ImagePickerButton({
   )
 }
 
-type ReviewStatus = 'BORRADOR' | 'EN_REVISION' | 'APROBADA'
-
 interface UploadedImage {
   name: string
   url: string
-}
-
-interface MinuteRecord {
-  id: string
-  numeroActa: string
-  proyecto: string
-  comuna: string
-  barrio: string
-  reunionConvocadaPor: string
-  fechaActividad: string
-  horaInicio: string
-  horaTermino: string
-  lugarReunion: string
-  motivoObjetivo: string
-  resumenTemas: string
-  compromisosResponsabilidades: string
-  gestorBarrial: string
-  accion: string
-  firma: UploadedImage | null
-  contraparteSpd: string
-  accionContraparte: string
-  firmaContraparte: UploadedImage | null
-  mediosVerificadores: UploadedImage[]
-  registroFotografico: UploadedImage[]
-  estado: ReviewStatus
-}
-
-const statusStyles: Record<ReviewStatus, string> = {
-  BORRADOR: 'bg-slate-100 text-slate-700',
-  EN_REVISION: 'bg-amber-100 text-amber-700',
-  APROBADA: 'bg-emerald-100 text-emerald-700',
+  file: File
 }
 
 const tableShell =
@@ -86,7 +61,12 @@ export function WorkerMinutesPage() {
   const firmaContraparteInputRef = useRef<HTMLInputElement>(null)
   const mediosInputRef = useRef<HTMLInputElement>(null)
   const registroInputRef = useRef<HTMLInputElement>(null)
-  const [records, setRecords] = useState<MinuteRecord[]>([])
+  const accessToken = useAuthStore((s) => s.accessToken)
+  const apiEnabled = Boolean(accessToken) && !accessToken?.startsWith('mock')
+  const minutesQuery = useWorkerMinutesList(apiEnabled)
+  const submitMutation = useWorkerMinutesSubmit()
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitOk, setSubmitOk] = useState<string | null>(null)
 
   const [numeroActa, setNumeroActa] = useState('')
   const [proyecto, setProyecto] = useState('')
@@ -122,8 +102,17 @@ export function WorkerMinutesPage() {
     return Array.from(files).map((file) => {
       const url = URL.createObjectURL(file)
       allocatedUrlsRef.current.add(url)
-      return { name: file.name, url }
+      return { name: file.name, url, file }
     })
+  }
+
+  const collectAttachmentFiles = (): File[] => {
+    const files: File[] = []
+    if (firma) files.push(firma.file)
+    if (firmaContraparte) files.push(firmaContraparte.file)
+    for (const image of mediosVerificadores) files.push(image.file)
+    for (const image of registroFotografico) files.push(image.file)
+    return files
   }
 
   const revokeImageUrl = (url: string) => {
@@ -166,37 +155,43 @@ export function WorkerMinutesPage() {
 
   const submitDraft = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const newRecord: MinuteRecord = {
-      id: crypto.randomUUID(),
-      numeroActa,
-      proyecto,
-      comuna,
-      barrio,
-      reunionConvocadaPor,
-      fechaActividad,
-      horaInicio,
-      horaTermino,
-      lugarReunion,
-      motivoObjetivo,
-      resumenTemas,
-      compromisosResponsabilidades,
-      gestorBarrial,
-      accion,
-      firma,
-      contraparteSpd,
-      accionContraparte,
-      firmaContraparte,
-      mediosVerificadores,
-      registroFotografico,
-      estado: 'EN_REVISION',
-    }
-    setRecords((prev) => [newRecord, ...prev])
-    clearForm()
-  }
+    setSubmitError(null)
+    setSubmitOk(null)
 
-  const markApproved = (id: string) => {
-    setRecords((prev) =>
-      prev.map((record) => (record.id === id ? { ...record, estado: 'APROBADA' } : record)),
+    if (accessToken?.startsWith('mock')) {
+      setSubmitError('El modo mock no persiste en el API. Use colaborador1@somosbarrio.cl con backend activo.')
+      return
+    }
+
+    submitMutation.mutate(
+      {
+        fields: {
+          numeroActa,
+          proyecto,
+          comuna,
+          barrio,
+          reunionConvocadaPor,
+          fechaActividad,
+          horaInicio,
+          horaTermino,
+          lugarReunion,
+          motivoObjetivo,
+          resumenTemas,
+          compromisosResponsabilidades,
+          gestorBarrial,
+          accion,
+          contraparteSpd,
+          accionContraparte,
+        },
+        files: collectAttachmentFiles(),
+      },
+      {
+        onSuccess: () => {
+          clearForm()
+          setSubmitOk('Acta enviada a revisión correctamente.')
+        },
+        onError: (error) => setSubmitError(formatMinuteError(error)),
+      },
     )
   }
 
@@ -209,7 +204,7 @@ export function WorkerMinutesPage() {
     <section className="space-y-5">
       <header>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/trabajador')}
           className="mb-2 flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
           <span className="material-symbols-outlined text-lg">arrow_back</span>
@@ -607,241 +602,32 @@ export function WorkerMinutesPage() {
           </table>
         </div>
 
-        <Button type="submit">Enviar a revisión</Button>
+        {submitError ? (
+          <p className="text-sm text-[var(--color-destructive)]" role="alert">
+            {submitError}
+          </p>
+        ) : null}
+        {submitOk ? (
+          <p className="text-sm text-emerald-600" role="status">
+            {submitOk}
+          </p>
+        ) : null}
+
+        <Button type="submit" disabled={submitMutation.isPending}>
+          {submitMutation.isPending ? 'Enviando…' : 'Enviar a revisión'}
+        </Button>
       </form>
 
       <section className="space-y-3">
         <h3 className="text-lg font-semibold">Actas registradas</h3>
-        {records.length === 0 ? (
+        {minutesQuery.isLoading ? (
+          <p className="text-sm text-[var(--color-muted-foreground)]">Cargando actas…</p>
+        ) : (minutesQuery.data?.length ?? 0) === 0 ? (
           <p className="rounded-lg border border-dashed border-[var(--color-border)] p-4 text-sm text-[var(--color-muted-foreground)]">
             Aún no hay actas creadas.
           </p>
         ) : (
-          records.map((record) => (
-            <article
-              key={record.id}
-              className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h4 className="font-semibold">
-                  Acta {record.numeroActa} — {record.proyecto}
-                </h4>
-                <span
-                  className={`rounded-full px-2 py-1 text-xs font-semibold ${statusStyles[record.estado]}`}
-                >
-                  {record.estado}
-                </span>
-              </div>
-
-              <div className={tableShell}>
-                <table className="w-full border-collapse text-left text-sm">
-                  <tbody>
-                    {(
-                      [
-                        ['Número acta', record.numeroActa],
-                        ['Proyecto', record.proyecto],
-                        ['Comuna', record.comuna],
-                        ['Barrio', record.barrio],
-                        ['Reunión convocada por', record.reunionConvocadaPor],
-                        ['Fecha de actividad', record.fechaActividad],
-                        ['Hora inicio', record.horaInicio],
-                        ['Hora término', record.horaTermino],
-                        ['Lugar reunión', record.lugarReunion],
-                      ] as const
-                    ).map(([label, value]) => (
-                      <tr key={label}>
-                        <td className={cellLabel}>{label}</td>
-                        <td className="border border-[var(--color-border)] px-3 py-2">{value}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={tableShell}>
-                <table className="w-full border-collapse text-left text-sm">
-                  <tbody>
-                    <tr>
-                      <td className={cellLabel}>Motivo y/u objetivo</td>
-                      <td className="border border-[var(--color-border)] px-3 py-2 whitespace-pre-wrap">
-                        {record.motivoObjetivo}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={tableShell}>
-                <table className="w-full border-collapse text-left text-sm">
-                  <tbody>
-                    <tr>
-                      <td className={cellLabel}>Resumen de temas tratados</td>
-                      <td className="border border-[var(--color-border)] px-3 py-2 whitespace-pre-wrap">
-                        {record.resumenTemas}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={tableShell}>
-                <table className="w-full border-collapse text-left text-sm">
-                  <tbody>
-                    <tr>
-                      <td className={cellLabel}>Compromisos y responsabilidades</td>
-                      <td className="border border-[var(--color-border)] px-3 py-2 whitespace-pre-wrap">
-                        {record.compromisosResponsabilidades}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={tableShell}>
-                <table className="w-full border-collapse text-left text-sm">
-                  <thead>
-                    <tr className="bg-[var(--color-muted)]/15">
-                      <th className="border border-[var(--color-border)] px-3 py-2 text-left font-semibold">
-                        Gestor barrial
-                      </th>
-                      <th className="border border-[var(--color-border)] px-3 py-2 text-left font-semibold">
-                        Acción
-                      </th>
-                      <th className="border border-[var(--color-border)] px-3 py-2 text-left font-semibold">
-                        Firma
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="border border-[var(--color-border)] px-3 py-2">
-                        {record.gestorBarrial}
-                      </td>
-                      <td className="border border-[var(--color-border)] px-3 py-2">
-                        {record.accion}
-                      </td>
-                      <td className="border border-[var(--color-border)] p-2">
-                        {record.firma ? (
-                          <img
-                            src={record.firma.url}
-                            alt="Firma gestor barrial"
-                            className="h-28 w-full rounded border border-[var(--color-border)] object-contain bg-white p-2"
-                          />
-                        ) : (
-                          <span className="text-xs text-[var(--color-muted-foreground)]">
-                            Sin firma
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={tableShell}>
-                <table className="w-full border-collapse text-left text-sm">
-                  <thead>
-                    <tr className="bg-[var(--color-muted)]/15">
-                      <th className="border border-[var(--color-border)] px-3 py-2 text-left font-semibold">
-                        Contraparte SPD
-                      </th>
-                      <th className="border border-[var(--color-border)] px-3 py-2 text-left font-semibold">
-                        Acción
-                      </th>
-                      <th className="border border-[var(--color-border)] px-3 py-2 text-left font-semibold">
-                        Firma
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="border border-[var(--color-border)] px-3 py-2">
-                        {record.contraparteSpd}
-                      </td>
-                      <td className="border border-[var(--color-border)] px-3 py-2">
-                        {record.accionContraparte}
-                      </td>
-                      <td className="border border-[var(--color-border)] p-2">
-                        {record.firmaContraparte ? (
-                          <img
-                            src={record.firmaContraparte.url}
-                            alt="Firma contraparte SPD"
-                            className="h-28 w-full rounded border border-[var(--color-border)] object-contain bg-white p-2"
-                          />
-                        ) : (
-                          <span className="text-xs text-[var(--color-muted-foreground)]">
-                            Sin firma
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={tableShell}>
-                <table className="w-full border-collapse text-left text-sm">
-                  <tbody>
-                    <tr>
-                      <td className={cellLabel}>Medios verificadores</td>
-                      <td className="border border-[var(--color-border)] p-3">
-                        {record.mediosVerificadores.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                            {record.mediosVerificadores.map((image) => (
-                              <img
-                                key={image.url}
-                                src={image.url}
-                                alt={image.name}
-                                className="h-28 w-full rounded border border-[var(--color-border)] object-cover"
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-[var(--color-muted-foreground)]">
-                            Sin imágenes
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={tableShell}>
-                <table className="w-full border-collapse text-left text-sm">
-                  <tbody>
-                    <tr>
-                      <td className={cellLabel}>Registro fotográfico</td>
-                      <td className="border border-[var(--color-border)] p-3">
-                        {record.registroFotografico.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                            {record.registroFotografico.map((image) => (
-                              <img
-                                key={image.url}
-                                src={image.url}
-                                alt={image.name}
-                                className="h-28 w-full rounded border border-[var(--color-border)] object-cover"
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-[var(--color-muted-foreground)]">
-                            Sin imágenes
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {record.estado === 'EN_REVISION' ? (
-                <Button type="button" onClick={() => markApproved(record.id)}>
-                  Aprobar como administrador (mock)
-                </Button>
-              ) : null}
-            </article>
-          ))
+          <WorkerMinutesHistoryList minutes={minutesQuery.data ?? []} />
         )}
       </section>
     </section>

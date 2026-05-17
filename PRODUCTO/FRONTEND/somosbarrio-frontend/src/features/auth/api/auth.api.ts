@@ -21,3 +21,7 @@ export async function refreshRequest(refreshToken: string): Promise<LoginRespons
   })
   return mapLoginResponse(data)
 }
+
+export async function logoutRequest(refreshToken: string): Promise<void> {
+  await authClient.post('/auth/logout', { refreshToken })
+}
