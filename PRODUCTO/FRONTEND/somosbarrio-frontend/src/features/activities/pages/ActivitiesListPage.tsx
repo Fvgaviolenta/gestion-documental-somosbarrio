@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { api } from '@/shared/lib/axios'
 import { formatDateOnly } from '@/shared/lib/formatters'
 import type { ActivityStatus } from '@/shared/types/enums'
+import { SB_COLORS } from '@/shared/constants/colors'
 
 const STATUS_LABELS: Record<string, string> = {
   PLANIFICADA: 'Planificada',
@@ -117,8 +118,10 @@ export function ActivitiesListPage() {
               ))}
             </select>
           </div>
-          <Link to="/activities/new" className="w-full md:w-auto">
-            <button className="w-full md:w-auto px-6 py-2 bg-black text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all active:scale-95 shadow-sm cursor-pointer text-sm">
+            <Link to="/activities/new" className="w-full md:w-auto">
+            <button 
+              style={{ backgroundColor: SB_COLORS.PURPLE }}
+              className="w-full md:w-auto px-6 py-2 text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95 shadow-sm cursor-pointer text-sm">
               <span className="material-symbols-outlined text-white text-lg">add</span>
               <span>Nueva Actividad</span>
             </button>
