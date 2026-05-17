@@ -1,5 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom' // <── Inyectado
 import { api } from '@/shared/lib/axios'
+import { SB_COLORS } from '@/shared/constants/colors'
 
 const STATUS_LABELS: Record<string, string> = {
     PLANIFICADA: 'PLANIF.',
@@ -28,6 +30,7 @@ type ActivityApiResponse = {
 }
 
 export function HomePage() {
+    const navigate = useNavigate() // <── Inyectado
     const [activities, setActivities] = useState<Activity[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -137,13 +140,20 @@ export function HomePage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-4xl font-bold text-sb-dark-purple">Control Central</h2>
-                            <p className="text-base text-on-surface-variant">Visualización en tiempo real del estado operativo de Somos Barrio.</p>
+                            <p className="text-base text-on-surface-variant">
+                                Visualización en tiempo real del estado operativo de Somos Barrio.</p>
                         </div>
                         <div className="flex gap-stack-sm">
-                            <button className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 bg-black text-white hover:bg-zinc-800 transition-colors cursor-pointer">
-                                <span className="material-symbols-outlined text-[18px]">download</span> Exportar Datos
+                            <button 
+                                style={{ backgroundColor: SB_COLORS.PURPLE }}
+                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 text-white hover:opacity-90 transition-opacity cursor-pointer">
+                                <span className="material-symbols-outlined text-[18px]">download</span> 
+                                Exportar Datos
                             </button>
-                            <button className="px-4 py-2 bg-black text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-zinc-800 transition-all cursor-pointer shadow-sm active:scale-95">
+                            
+                            <button 
+                                style={{ backgroundColor: SB_COLORS.PURPLE }}
+                                className="px-4 py-2 text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all cursor-pointer shadow-sm active:scale-95">
                                 <span className="material-symbols-outlined text-white text-[18px]">add</span> 
                                 Nuevo Trámite
                             </button>
@@ -216,10 +226,14 @@ export function HomePage() {
                             <h4 className="text-sm font-semibold text-sb-dark-purple mb-stack-md">Accesos Rápidos</h4>
                             <div className="grid grid-cols-2 gap-stack-sm">
                                 {[
-                                    { icon: 'description', label: 'Docs' },
-                                    { icon: 'person_search', label: 'Usuarios' }
+                                    { icon: 'description', label: 'Docs', path: '/documents' },
+                                    { icon: 'person_search', label: 'Usuarios', path: '/users' }
                                 ].map((item, i) => (
-                                    <button key={i} className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer">
+                                    <button 
+                                        key={i} 
+                                        onClick={() => navigate(item.path)} // <── Inyectado
+                                        className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer"
+                                    >
                                         <span className="material-symbols-outlined text-white mb-1 group-hover:scale-110 transition-transform">{item.icon}</span>
                                         <span className="text-xs font-medium">{item.label}</span>
                                     </button>
