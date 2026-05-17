@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 
 import {
   loginRequest,
+  logoutRequest,
   refreshRequest,
   type UserDto,
 } from '@/features/auth/api/auth.api'
@@ -13,7 +14,7 @@ interface AuthState {
   accessToken: string | null
   refreshToken: string | null
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   refresh: () => Promise<string | null>
   hasRole: (...roles: Role[]) => boolean
 }
@@ -34,8 +35,17 @@ export const useAuthStore = create<AuthState>()(
         })
       },
 
-      logout: () => {
+      logout: async () => {
+        const rt = get().refreshToken
+        if (rt && !rt.startsWith('mock')) {
+          try {
+            await logoutRequest(rt)
+          } catch {
+            // Cierre de sesión idempotente en servidor
+          }
+        }
         set({ user: null, accessToken: null, refreshToken: null })
+        localStorage.clear()
       },
 
       refresh: async () => {

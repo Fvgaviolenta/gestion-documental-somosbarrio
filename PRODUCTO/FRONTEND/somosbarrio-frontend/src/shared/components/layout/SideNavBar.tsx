@@ -8,8 +8,8 @@ export default function SideNavBar() {
     const logout = useAuthStore((s) => s.logout);
     const isActive = (path: string) => location.pathname === path;
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
         navigate('/login', { replace: true });
     };
 

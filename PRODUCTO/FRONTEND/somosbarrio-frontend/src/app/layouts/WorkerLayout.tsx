@@ -5,8 +5,7 @@ import { APP_NAME } from '@/shared/lib/constants'
 import { useAuthStore } from '@/store/authStore'
 
 const menuLinks = [
-  { to: '/trabajador/mis-registros', label: 'Home', id: 'home' },
-  { to: '/trabajador/mis-registros', label: 'Mis registros', id: 'mis-registros' },
+  { to: '/trabajador', label: 'Home', id: 'home' },
   { to: '/trabajador/configuracion', label: 'Configuración', id: 'config' },
   { to: '/trabajador/ayuda', label: 'Ayuda / soporte', id: 'ayuda' },
   { to: '/trabajador/notas', label: 'Notas', id: 'notas' },
@@ -77,14 +76,14 @@ export function WorkerLayout() {
     return () => window.removeEventListener('keydown', onKey)
   }, [menuOpen])
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/trabajador/login', { replace: true })
   }
 
   const linkIsActive = (item: (typeof menuLinks)[number]) => {
-    if (item.id === 'home' || item.id === 'mis-registros') {
-      return false
+    if (item.id === 'home') {
+      return location.pathname === '/trabajador'
     }
     return location.pathname === item.to
   }

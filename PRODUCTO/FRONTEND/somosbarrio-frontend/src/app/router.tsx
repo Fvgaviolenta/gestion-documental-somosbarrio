@@ -9,7 +9,7 @@ import { HomePage } from '@/features/home/pages/HomePage'
 import { WorkerReportsPage } from '@/features/reports/pages/WorkerReportsPage'
 import { WorkerConfigPage } from '@/features/worker-menu/pages/WorkerConfigPage'
 import { WorkerHelpPage } from '@/features/worker-menu/pages/WorkerHelpPage'
-import { WorkerMyRecordsPage } from '@/features/worker-menu/pages/WorkerMyRecordsPage'
+import { WorkerHomePage } from '@/features/worker-menu/pages/WorkerHomePage'
 import { WorkerNotesPage } from '@/features/worker-menu/pages/WorkerNotesPage'
 import { WorkerLogbookPage } from '@/features/worker-logbook/pages/WorkerLogbookPage'
 import { WorkerMinutesPage } from '@/features/worker-minutes/pages/WorkerMinutesPage'
@@ -54,8 +54,8 @@ export const router = createBrowserRouter([
       </WorkerRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="mis-registros" replace /> },
-      { path: 'mis-registros', element: <WorkerMyRecordsPage /> },
+      { index: true, element: <WorkerHomePage /> },
+      { path: 'mis-registros', element: <Navigate to="/trabajador" replace /> },
       { path: 'configuracion', element: <WorkerConfigPage /> },
       { path: 'ayuda', element: <WorkerHelpPage /> },
       { path: 'notas', element: <WorkerNotesPage /> },
