@@ -19,6 +19,7 @@ import { AuthLayout } from './layouts/AuthLayout'
 import { WorkerLayout } from './layouts/WorkerLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { WorkerRoute } from './WorkerRoute'
+import { UsersListPage } from '@/features/users/pages/UsersListPage'
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
       { path: 'activities/new', element: <CreateActivityPage /> },
       { path: 'activities/:id/edit', element: <EditActivityPage /> },
       { path: 'reports', element: <WorkerReportsPage /> },
+      { path: 'users', element: <UsersListPage /> }
     ],
   },
   {
