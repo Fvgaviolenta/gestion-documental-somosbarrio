@@ -12,6 +12,8 @@ interface ActivityFormProps {
   isSubmitting?: boolean
   submitLabel: string
   onSubmit: (values: ActivityFormValues) => void
+  onCancel?: () => void
+  cancelLabel?: string
 }
 
 export function ActivityForm({
@@ -19,6 +21,8 @@ export function ActivityForm({
   isSubmitting,
   submitLabel,
   onSubmit,
+  onCancel,
+  cancelLabel,
 }: ActivityFormProps) {
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activitySchema),
@@ -106,19 +110,28 @@ export function ActivityForm({
         ) : null}
       </div>
 
-      {/* Botón corregido con tono Gris Claro (slate-200) y mejor contraste */}
-      <div className='flex justify-end pt-4'>
-        <button 
-          type='submit' 
+      <div className='flex justify-end items-center pt-4 gap-3'>
+        {onCancel ? (
+          <button
+            type='button'
+            onClick={onCancel}
+            className='rounded-lg border border-outline-variant px-6 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors'
+          >
+            {cancelLabel ?? 'Cancelar'}
+          </button>
+        ) : null}
+
+        <button
+          type='submit'
           disabled={isSubmitting}
-          className="cursor-pointer rounded-lg bg-black px-8 py-2 font-semibold text-white transition-all hover:bg-zinc-700 active:scale-95 disabled:opacity-50"
+          className='cursor-pointer rounded-lg bg-black px-6 py-2 text-sm font-semibold text-white transition-all hover:bg-zinc-800 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2'
         >
           {isSubmitting ? (
-            <span className="material-symbols-outlined animate-spin text-white text-lg">progress_activity</span>
+            <span className='material-symbols-outlined animate-spin text-white text-lg'>progress_activity</span>
           ) : (
-            <span className="material-symbols-outlined text-white text-lg">check_circle</span>
+            <span className='material-symbols-outlined text-white text-lg'>check</span>
           )}
-          {isSubmitting ? 'Guardando…' : submitLabel}
+          <span>{isSubmitting ? 'Guardando…' : submitLabel}</span>
         </button>
       </div>
     </form>
