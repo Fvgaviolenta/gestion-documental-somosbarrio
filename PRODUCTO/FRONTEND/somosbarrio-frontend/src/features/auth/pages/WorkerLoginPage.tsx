@@ -62,6 +62,9 @@ export function WorkerLoginPage() {
     if (!err.response) {
       return 'No hay conexión con el API. ¿Está el backend activo?'
     }
+    if (err.response.status === 502) {
+      return 'Error 502: el backend no responde. Abre Docker Desktop y ejecuta docker compose up -d --build en la carpeta somosbarrio-backend (puerto 8080).'
+    }
     const data = err.response.data as ApiErrorBody | undefined
     return data?.message ?? err.message
   })()

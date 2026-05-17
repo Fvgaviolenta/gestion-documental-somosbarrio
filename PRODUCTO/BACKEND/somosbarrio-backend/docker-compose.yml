@@ -44,7 +44,7 @@ services:
       TEMPLATE_ROOT: /app/templates
       LIBREOFFICE_PATH: /usr/bin/soffice
     ports:
-      - "8081:8380"
+      - "8080:8380"
     volumes:
       - uploads_data:/app/uploads
       - ./templates:/app/templates:ro

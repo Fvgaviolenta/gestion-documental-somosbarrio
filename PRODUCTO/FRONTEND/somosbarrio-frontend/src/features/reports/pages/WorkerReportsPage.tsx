@@ -1,54 +1,130 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import axios from 'axios'
 
 import { Button } from '@/shared/components/ui/button'
 import { createWorkerReport } from '@/features/reports/api/reports.api'
+import { useDefaultActivityId } from '@/features/worker/hooks/useDefaultActivityId'
+import { useAuthStore } from '@/store/authStore'
+
+function ImagePickerButton({
+  inputRef,
+  inputId,
+  multiple,
+  onPick,
+}: {
+  inputRef: RefObject<HTMLInputElement | null>
+  inputId: string
+  multiple?: boolean
+  onPick: (files: FileList | null) => void
+}) {
+  return (
+    <>
+      <input
+        id={inputId}
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        multiple={multiple}
+        className="sr-only"
+        onChange={(e) => {
+          onPick(e.target.files)
+          e.target.value = ''
+        }}
+      />
+      <Button type="button" onClick={() => inputRef.current?.click()}>
+        Agregar imagen
+      </Button>
+    </>
+  )
+}
+
+interface PhotoPreview {
+  id: string
+  name: string
+  url: string
+  file: File
+}
 
 export function WorkerReportsPage() {
   const navigate = useNavigate()
+  const accessToken = useAuthStore((s) => s.accessToken)
+  const { data: activityId } = useDefaultActivityId()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [photos, setPhotos] = useState<File[]>([])
+  const [photos, setPhotos] = useState<PhotoPreview[]>([])
   const [localOk, setLocalOk] = useState<string | null>(null)
-
-  const previews = useMemo(
-    () =>
-      photos.map((file) => ({
-        name: file.name,
-        url: URL.createObjectURL(file),
-      })),
-    [photos],
-  )
+  const photosInputRef = useRef<HTMLInputElement>(null)
+  const allocatedUrlsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
+    const allocated = allocatedUrlsRef.current
     return () => {
-      previews.forEach((preview) => URL.revokeObjectURL(preview.url))
+      for (const url of allocated) URL.revokeObjectURL(url)
+      allocated.clear()
     }
-  }, [previews])
+  }, [])
+
+  const addPhotos = (files: FileList | null) => {
+    if (!files?.length) return
+    const next = Array.from(files).map((file) => {
+      const url = URL.createObjectURL(file)
+      allocatedUrlsRef.current.add(url)
+      return {
+        id: crypto.randomUUID(),
+        name: file.name,
+        url,
+        file,
+      }
+    })
+    setPhotos((prev) => [...prev, ...next])
+  }
+
+  const removePhoto = (id: string) => {
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.id === id)
+      if (target) {
+        URL.revokeObjectURL(target.url)
+        allocatedUrlsRef.current.delete(target.url)
+      }
+      return prev.filter((p) => p.id !== id)
+    })
+  }
+
+  const clearPhotos = () => {
+    setPhotos((prev) => {
+      for (const photo of prev) {
+        URL.revokeObjectURL(photo.url)
+        allocatedUrlsRef.current.delete(photo.url)
+      }
+      return []
+    })
+  }
 
   const mutation = useMutation({
     mutationFn: () =>
       createWorkerReport({
         title,
         description,
-        photos,
+        photos: photos.map((p) => p.file),
+        activityId,
       }),
     onSuccess: () => {
       setTitle('')
       setDescription('')
-      setPhotos([])
+      clearPhotos()
       setLocalOk('Reporte enviado correctamente.')
     },
   })
 
   const errorMessage = (() => {
     if (!mutation.isError) return null
-    if (!axios.isAxiosError(mutation.error)) return 'No se pudo enviar el reporte.'
-    if (mutation.error.response?.status === 404) {
-      return 'El endpoint de reportes aún no existe en backend; la vista y carga de fotos ya quedaron listas.'
+    if (accessToken?.startsWith('mock')) {
+      return 'El modo mock no persiste en el API. Use colaborador1@somosbarrio.cl con backend activo.'
     }
+    if (!axios.isAxiosError(mutation.error)) return 'No se pudo enviar el reporte.'
     return (
       (mutation.error.response?.data as { message?: string } | undefined)?.message ??
       mutation.error.message
@@ -57,22 +133,7 @@ export function WorkerReportsPage() {
 
   return (
     <section className="space-y-5">
-      <div>
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-2 flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
-        >
-          <span className="material-symbols-outlined text-lg">arrow_back</span>
-          Volver
-        </button>
-        <h2 className="text-2xl font-bold text-[var(--color-foreground)]">Reportar incidencia</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-          Puedes subir fotos desde tu celular usando la c&aacute;mara o galeria.
-        </p>
-        <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-          Complemento del módulo trabajador junto a Bitácora y Actas.
-        </p>
-      </div>
+      <PageHeader navigate={navigate} />
 
       <form
         className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-4 shadow-sm"
@@ -84,7 +145,7 @@ export function WorkerReportsPage() {
       >
         <div>
           <label htmlFor="report-title" className="mb-1 block text-sm font-medium">
-            T&iacute;tulo del reporte
+            Título del reporte
           </label>
           <input
             id="report-title"
@@ -98,7 +159,7 @@ export function WorkerReportsPage() {
 
         <div>
           <label htmlFor="report-description" className="mb-1 block text-sm font-medium">
-            Descripci&oacute;n
+            Descripción
           </label>
           <textarea
             id="report-description"
@@ -110,37 +171,62 @@ export function WorkerReportsPage() {
           />
         </div>
 
-        <div>
-          <label htmlFor="report-photos" className="mb-1 block text-sm font-medium">
-            Fotograf&iacute;as
-          </label>
-          <input
-            id="report-photos"
-            type="file"
-            accept="image/*"
-            capture="environment"
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+          <p className="mb-3 text-sm font-medium text-[var(--color-foreground)]">Fotografías</p>
+          <ImagePickerButton
+            inputRef={photosInputRef}
+            inputId="report-photos"
             multiple
-            className="block w-full text-sm"
-            onChange={(e) => {
-              const selected = Array.from(e.target.files ?? [])
-              setPhotos(selected)
-            }}
+            onPick={addPhotos}
           />
-          <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-            En celular puedes abrir la c&aacute;mara directamente.
+          <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
+            En celular puedes abrir la cámara directamente. Puedes agregar varias imágenes.
           </p>
-        </div>
 
-        {previews.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {previews.map((preview) => (
-              <article key={preview.name} className="overflow-hidden rounded-lg border border-[var(--color-border)]">
-                <img src={preview.url} alt={preview.name} className="h-28 w-full object-cover" />
-                <p className="truncate px-2 py-1 text-xs">{preview.name}</p>
-              </article>
-            ))}
+          <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/5 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-medium text-[var(--color-foreground)]">Vista previa</p>
+              {photos.length > 0 ? (
+                <span className="text-xs text-emerald-700">
+                  {photos.length} imagen{photos.length === 1 ? '' : 'es'} lista
+                  {photos.length === 1 ? '' : 's'} para enviar
+                </span>
+              ) : null}
+            </div>
+
+            {photos.length === 0 ? (
+              <div className="flex min-h-[7rem] items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-background)] px-4 py-6 text-center text-xs text-[var(--color-muted-foreground)]">
+                Aún no hay imágenes. Usa «Agregar imagen» para ver la miniatura aquí.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {photos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className="relative overflow-hidden rounded-lg border border-[var(--color-border)] bg-white"
+                  >
+                    <img
+                      src={photo.url}
+                      alt={photo.name}
+                      className="h-28 w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white hover:bg-black"
+                      onClick={() => removePhoto(photo.id)}
+                      aria-label={`Quitar ${photo.name}`}
+                    >
+                      Quitar
+                    </button>
+                    <p className="truncate px-2 py-1 text-[10px] text-[var(--color-muted-foreground)]">
+                      {photo.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : null}
+        </div>
 
         {errorMessage ? (
           <p className="text-sm text-[var(--color-destructive)]" role="alert">
@@ -158,5 +244,24 @@ export function WorkerReportsPage() {
         </Button>
       </form>
     </section>
+  )
+}
+
+function PageHeader({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => navigate('/trabajador')}
+        className="mb-2 flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
+      >
+        <span className="material-symbols-outlined text-lg">arrow_back</span>
+        Volver al Home
+      </button>
+      <h2 className="text-2xl font-bold text-[var(--color-foreground)]">Reporte rápido</h2>
+      <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
+        Registro de incidencia con evidencias fotográficas.
+      </p>
+    </div>
   )
 }
