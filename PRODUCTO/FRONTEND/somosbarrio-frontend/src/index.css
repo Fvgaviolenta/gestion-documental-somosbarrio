@@ -4,7 +4,7 @@
   /* Fuentes */
   --font-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
 
-  /* Tus Colores de Mockup (Tokens del sistema) */
+  /* Tokens del sistema */
   --color-primary: #0F172A;
   --color-surface: #f7f9fb;
   --color-surface-container: #eceef0;
@@ -22,7 +22,13 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
-  /* Tus Espaciados de Mockup */
+  /* Colores institucionales Somos Barrio */
+  --color-sb-red: #E55B5B;
+  --color-sb-purple: #6B3F82;
+  --color-sb-cyan: #70C5CE;
+  --color-sb-dark-purple: #5B3A7D;
+
+  /* Espaciados de Mockup */
   --spacing-stack-sm: 8px;
   --spacing-stack-md: 16px;
   --spacing-stack-lg: 24px;
