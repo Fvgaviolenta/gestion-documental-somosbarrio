@@ -31,15 +31,9 @@ export default function SideNavBar() {
                     <span className="text-sm font-semibold">Panel de Control</span>
                 </Link>
                 
-                {/* Ruta actualizada según router.tsx */}
                 <Link to="/activities" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/activities') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined">folder_open</span>
                     <span className="text-sm font-semibold">Actividades</span>
-                </Link>
-                
-                <Link to="/inbox" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/inbox') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
-                    <span className="material-symbols-outlined">move_to_inbox</span>
-                    <span className="text-sm font-semibold">Bandeja de Entrada</span>
                 </Link>
                 
                 <Link to="/reports" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/reports') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>

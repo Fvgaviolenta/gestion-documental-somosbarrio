@@ -59,6 +59,7 @@ export function HomePage() {
 
                 setActivities(parsedActivities)
             } catch (e) {
+                console.error('Error al obtener actividades desde el backend:', e);
                 if (!canceled) {
                     setError('No se pudieron cargar las actividades')
                 }
@@ -139,10 +140,10 @@ export function HomePage() {
                             <p className="text-base text-on-surface-variant">Visualización en tiempo real del estado operativo de Somos Barrio.</p>
                         </div>
                         <div className="flex gap-stack-sm">
-                            <button className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 bg-sb-purple text-white hover:bg-sb-purple/90 transition-colors cursor-pointer">
+                            <button className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 bg-black text-white hover:bg-zinc-800 transition-colors cursor-pointer">
                                 <span className="material-symbols-outlined text-[18px]">download</span> Exportar Datos
                             </button>
-                            <button className="px-4 py-2 bg-sb-purple text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-sb-purple/90 transition-all cursor-pointer shadow-sm active:scale-95">
+                            <button className="px-4 py-2 bg-black text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-zinc-800 transition-all cursor-pointer shadow-sm active:scale-95">
                                 <span className="material-symbols-outlined text-white text-[18px]">add</span> 
                                 Nuevo Trámite
                             </button>
@@ -216,9 +217,7 @@ export function HomePage() {
                             <div className="grid grid-cols-2 gap-stack-sm">
                                 {[
                                     { icon: 'description', label: 'Docs' },
-                                    { icon: 'person_search', label: 'Usuarios' },
-                                    { icon: 'payments', label: 'Pagos' },
-                                    { icon: 'mail', label: 'Correo' }
+                                    { icon: 'person_search', label: 'Usuarios' }
                                 ].map((item, i) => (
                                     <button key={i} className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer">
                                         <span className="material-symbols-outlined text-white mb-1 group-hover:scale-110 transition-transform">{item.icon}</span>
@@ -232,22 +231,15 @@ export function HomePage() {
                         <div className="relative overflow-hidden bg-primary-container text-on-primary-container border border-outline-variant rounded-xl p-stack-md shadow-sm">
                             <div className="relative z-10">
                                 <h4 className="text-sm font-semibold mb-2">Estado del Sistema</h4>
-                                <div className="flex items-center gap-3 mb-4">
+                                <div className="flex items-center gap-3">
                                     <div className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse"></div>
                                     <span className="text-sm opacity-90 font-medium">Backend Online (Port 8080)</span>
                                 </div>
-                                <button className="w-full py-2 bg-black text-white rounded-lg text-sm font-semibold hover:bg-zinc-700 transition-all cursor-pointer">
-                                    Ver Logs
-                                </button>
                             </div>
                         </div>
                     </div>
                 </section>
             </div>
-
-            <button className="fixed bottom-8 right-8 h-14 w-14 bg-sb-purple text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 hover:bg-sb-purple/90 active:scale-95 transition-all z-50 cursor-pointer border border-outline-variant/10">
-                <span className="material-symbols-outlined text-3xl text-white" style={{fontVariationSettings: "'FILL' 1"}}>add</span>
-            </button>
         </div>
     );
 }

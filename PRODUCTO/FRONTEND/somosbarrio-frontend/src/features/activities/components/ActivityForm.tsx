@@ -32,7 +32,6 @@ export function ActivityForm({
 
   return (
     <form
-      /* Quitamos bordes y fondos para que herede el estilo de la tarjeta del padre */
       className='space-y-stack-md'
       onSubmit={form.handleSubmit(onSubmit)}
       noValidate
@@ -106,7 +105,6 @@ export function ActivityForm({
         ) : null}
       </div>
 
-      {/* Botón corregido con tono Gris Claro (slate-200) y mejor contraste */}
       <div className='flex justify-end pt-4'>
         <button 
           type='submit' 
