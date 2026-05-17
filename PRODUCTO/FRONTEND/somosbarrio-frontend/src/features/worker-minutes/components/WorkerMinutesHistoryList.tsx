@@ -4,6 +4,7 @@ import {
   parseMinuteContent,
 } from '@/features/worker-minutes/hooks/useWorkerMinutesSubmit'
 import type { MinuteDto } from '@/features/minutes/types'
+import { formatStoredDateForDisplay } from '@/shared/lib/dateInput'
 
 export function WorkerMinutesHistoryList({ minutes }: { minutes: MinuteDto[] }) {
   return (
@@ -22,7 +23,8 @@ export function WorkerMinutesHistoryList({ minutes }: { minutes: MinuteDto[] }) 
                   <span className="font-medium">Territorio:</span> {fields.barrio}, {fields.comuna}
                 </p>
                 <p>
-                  <span className="font-medium">Fecha actividad:</span> {fields.fechaActividad} (
+                  <span className="font-medium">Fecha actividad:</span>{' '}
+                  {formatStoredDateForDisplay(fields.fechaActividad)} (
                   {fields.horaInicio}–{fields.horaTermino})
                 </p>
                 <p>
