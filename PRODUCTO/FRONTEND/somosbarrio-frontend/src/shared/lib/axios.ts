@@ -11,8 +11,22 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  config.headers['X-Correlation-Id'] = crypto.randomUUID()
+  
+  if (token) {
+    if (config.headers.set) {
+      config.headers.set('Authorization', `Bearer ${token}`)
+    } else {
+      config.headers['Authorization'] = `Bearer ${token}`
+    }
+  }
+  
+  // Hacemos lo mismo para el X-Correlation-Id
+  if (config.headers.set) {
+    config.headers.set('X-Correlation-Id', crypto.randomUUID())
+  } else {
+    config.headers['X-Correlation-Id'] = crypto.randomUUID()
+  }
+
   return config
 })
 
@@ -34,7 +48,11 @@ api.interceptors.response.use(
       const newToken = await refreshing
       refreshing = null
       if (newToken) {
-        original.headers.Authorization = `Bearer ${newToken}`
+        if (original.headers.set) {
+          original.headers.set('Authorization', `Bearer ${newToken}`)
+        } else {
+          original.headers.Authorization = `Bearer ${newToken}`
+        }
         return api(original)
       }
       useAuthStore.getState().logout()

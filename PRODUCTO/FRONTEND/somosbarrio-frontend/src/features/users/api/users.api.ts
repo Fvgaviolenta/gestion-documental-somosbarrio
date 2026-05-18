@@ -4,16 +4,28 @@ import { api } from '@/shared/lib/axios';
 export interface User {
     id: string;
     email: string;
-    fullName?: string;
+    firstName?: string;  
+    lastName?: string;   
     roles: string[];
     enabled: boolean;
 }
 
-// Estructura de datos requerida para el formulario de creación
+// Interfaz para mapear la respuesta paginada de Spring Boot
+export interface PagedResponse<T> {
+    content: T[];
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+}
+
+// Estructura de datos requerida para el formulario de creación (Contrato exacto de Swagger)
 export interface CreateUserDTO {
     email: string;
-    fullName?: string;
-    roles: string[]; // Ej: ['COLABORADOR'] o ['ADMINISTRADOR']
+    password: string;  
+    firstName: string; 
+    lastName: string;  
+    roles: string[]; 
 }
 
 export const usersApi = {
@@ -22,15 +34,15 @@ export const usersApi = {
      * Endpoint exclusivo para el rol ADMINISTRADOR.
      */
     getAll: async (): Promise<User[]> => {
-        const response = await api.get<User[]>('/api/v1/users');
-        return response.data;
+        const response = await api.get<PagedResponse<User>>('/users');
+        return response.data?.content ?? [];
     },
 
     /**
      * Registra un nuevo usuario (Administrador o Colaborador) en el sistema.
      */
     create: async (data: CreateUserDTO): Promise<User> => {
-        const response = await api.post<User>('/api/v1/users', data);
+        const response = await api.post<User>('/users', data);
         return response.data;
     },
 
@@ -38,6 +50,6 @@ export const usersApi = {
      * Deshabilita o elimina un usuario por su ID.
      */
     delete: async (id: string): Promise<void> => {
-        await api.delete(`/api/v1/users/${id}`);
+        await api.delete(`/users/${id}`);
     }
 };

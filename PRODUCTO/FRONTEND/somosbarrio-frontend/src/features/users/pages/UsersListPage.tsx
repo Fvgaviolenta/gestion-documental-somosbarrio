@@ -1,29 +1,29 @@
 import { useState } from 'react';
-import { useUsers, useDeleteUser, useCreateUser } from '../hooks/useUsers'; // 1. Agregado useCreateUser
+import axios from 'axios'; 
+import { useUsers, useDeleteUser, useCreateUser } from '../hooks/useUsers';
 import { SB_COLORS } from '@/shared/constants/colors';
+import type { ApiErrorBody } from '@/shared/types/api'; 
 
 export function UsersListPage() {
     const { data: users, isLoading, error } = useUsers();
     const deleteUserMutation = useDeleteUser();
-    const createUserMutation = useCreateUser(); // Declaráramos la mutación real
+    const createUserMutation = useCreateUser();
 
-    // Estados para filtros
     const [searchTerm, setSearchTerm] = useState('');
 
-    // 2. Estados para controlar el Formulario de Creación Real
     const [showForm, setShowForm] = useState(false);
     const [email, setEmail] = useState('');
     const [fullName, setFullName] = useState('');
     const [role, setRole] = useState('COLABORADOR');
     const [formError, setFormError] = useState<string | null>(null);
 
-    // Filtrado básico local para optimizar la experiencia de búsqueda
-    const filteredUsers = users?.filter(user => 
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) ?? [];
+    const filteredUsers = users?.filter(user => {
+        const emailMatch = user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const firstNameMatch = user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false;
+        const lastNameMatch = user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false;
+        return emailMatch || firstNameMatch || lastNameMatch;
+    }) ?? [];
 
-    // Manejador del envío del formulario al backend de Spring Boot
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormError(null);
@@ -33,28 +33,48 @@ export function UsersListPage() {
             return;
         }
 
+        if (!fullName.trim()) {
+            setFormError('El nombre completo es obligatorio.');
+            return;
+        }
+
         try {
+            const nameParts = fullName.trim().split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || ' ';
+
             await createUserMutation.mutateAsync({
                 email: email.trim(),
-                fullName: fullName.trim() || undefined,
+                password: 'Temporal123!', 
+                firstName: firstName,
+                lastName: lastName,
                 roles: [role]
             });
             
-            // Limpiar campos si todo sale bien
             setEmail('');
             setFullName('');
             setRole('COLABORADOR');
             setShowForm(false);
         } catch (err) {
             console.error('Error al crear usuario:', err);
-            setFormError('No se pudo registrar el usuario en el sistema.');
+            
+            if (axios.isAxiosError(err) && err.response) {
+                const data = err.response.data as ApiErrorBody | undefined;
+                setFormError(data?.message ?? 'El servidor rechazó el registro. Verifique el formato.');
+            } else {
+                setFormError(err instanceof Error ? err.message : 'No se pudo registrar el usuario en el sistema.');
+            }
         }
     };
 
     const handleDelete = async (id: string) => {
         if (window.confirm('¿Estás seguro de que deseas deshabilitar a este usuario?')) {
             try {
-                await deleteUserMutation.mutateAsync(id);
+                try {
+                    await deleteUserMutation.mutateAsync(id);
+                } catch (e) {
+                    console.error('Error al dar de baja al usuario:', e);
+                }
             } catch (e) {
                 console.error('Error al dar de baja al usuario:', e);
             }
@@ -65,7 +85,6 @@ export function UsersListPage() {
         <div className="min-h-screen p-margin bg-surface">
             <div className="max-w-container-max mx-auto">
                 
-                {/* Cabecera del Módulo */}
                 <section className="mb-stack-lg">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
@@ -75,7 +94,6 @@ export function UsersListPage() {
                             </p>
                         </div>
 
-                        {/* Conexión del botón para alternar el formulario */}
                         <button 
                             onClick={() => setShowForm(!showForm)}
                             style={{ backgroundColor: SB_COLORS.PURPLE }}
@@ -89,13 +107,12 @@ export function UsersListPage() {
                     </div>
                 </section>
 
-                {/* 3. Formulario de Inserción de Usuarios */}
                 {showForm && (
                     <form onSubmit={handleCreateUser} className="mb-stack-lg bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl shadow-md">
                         <h3 className="text-lg font-bold text-sb-dark-purple mb-stack-sm">Registrar Nuevo Personal</h3>
                         
                         {formError && (
-                            <div className="mb-stack-sm p-stack-sm bg-error-container text-on-error-container rounded-lg text-xs border border-error/20">
+                            <div className="mb-stack-sm p-stack-sm bg-error-container text-on-error-container rounded-lg text-xs border border-error/20" role="alert">
                                 {formError}
                             </div>
                         )}
@@ -129,8 +146,8 @@ export function UsersListPage() {
                                     onChange={(e) => setRole(e.target.value)}
                                     className="p-2 border border-outline-variant rounded-lg text-sm bg-surface focus:outline-none focus:border-sb-purple"
                                 >
-                                    <option value="COLABORADOR">COLABORADOR (Terreno)</option>
-                                    <option value="ADMINISTRADOR">ADMINISTRADOR (Gestión)</option>
+                                    <option value="COLABORADOR">COLABORADOR</option>
+                                    <option value="ADMINISTRADOR">ADMINISTRADOR</option>
                                 </select>
                             </div>
                         </div>
@@ -147,7 +164,6 @@ export function UsersListPage() {
                     </form>
                 )}
 
-                {/* Barra de Filtros */}
                 <section className="mb-stack-md bg-surface-container-lowest border border-outline-variant p-stack-sm rounded-xl shadow-sm flex items-center gap-3">
                     <span className="material-symbols-outlined text-on-surface-variant">search</span>
                     <input 
@@ -159,7 +175,6 @@ export function UsersListPage() {
                     />
                 </section>
 
-                {/* Estados de Carga y Errores de API REST */}
                 {isLoading ? (
                     <div className="flex justify-center items-center py-20 text-on-surface-variant font-medium">
                         <span className="animate-pulse">Cargando nómina de usuarios...</span>
@@ -169,7 +184,6 @@ export function UsersListPage() {
                         No se pudieron cargar los usuarios de la base de datos. Verifique sus permisos de Administrador.
                     </div>
                 ) : (
-                    /* Tabla de Datos de Usuarios */
                     <section className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
@@ -195,10 +209,12 @@ export function UsersListPage() {
                                                 <td className="p-stack-md">
                                                     <div className="flex items-center gap-3">
                                                         <div className="h-8 w-8 rounded-full bg-sb-dark-purple/10 flex items-center justify-center text-sb-dark-purple font-bold text-sm">
-                                                            {user.fullName ? user.fullName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                                                            {user.firstName ? user.firstName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
                                                         </div>
                                                         <span className="text-sm font-semibold text-on-surface">
-                                                            {user.fullName || 'Sin Nombre Completo'}
+                                                            {user.firstName || user.lastName 
+                                                                ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() 
+                                                                : 'Sin Nombre Completo'}
                                                         </span>
                                                     </div>
                                                 </td>
