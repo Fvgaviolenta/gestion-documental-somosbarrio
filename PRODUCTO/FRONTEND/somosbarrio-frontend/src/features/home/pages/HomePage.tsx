@@ -1,8 +1,9 @@
-﻿import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { ExportDocumentsDialog } from '@/features/documents/components/ExportDocumentsDialog'
 import { api } from '@/shared/lib/axios'
+import { SB_COLORS } from '@/shared/constants/colors'
 
 const STATUS_LABELS: Record<string, string> = {
     PLANIFICADA: 'PLANIF.',
@@ -31,6 +32,7 @@ type ActivityApiResponse = {
 }
 
 export function HomePage() {
+    const navigate = useNavigate()
     const [activities, setActivities] = useState<Activity[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -129,9 +131,12 @@ export function HomePage() {
             label: 'Eficiencia del Portal',
             val: '100%',
             icon: 'speed',
-            tag: 'Óptimo',
+            tag: '?ptimo',
         },
     ]
+
+    const headerButtonClass =
+        'px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 text-white hover:opacity-90 transition-all cursor-pointer shadow-sm active:scale-95'
 
     return (
         <div className="min-h-screen p-margin bg-surface">
@@ -141,22 +146,26 @@ export function HomePage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-4xl font-bold text-sb-dark-purple">Control Central</h2>
-                            <p className="text-base text-on-surface-variant">Visualización en tiempo real del estado operativo de Somos Barrio.</p>
+                            <p className="text-base text-on-surface-variant">
+                                Visualizaci?n en tiempo real del estado operativo de Somos Barrio.</p>
                         </div>
                         <div className="flex gap-stack-sm">
                             <button
                                 type="button"
                                 onClick={() => setExportOpen(true)}
-                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 bg-black text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                                style={{ backgroundColor: SB_COLORS.PURPLE }}
+                                className={headerButtonClass}
                             >
-                                <span className="material-symbols-outlined text-[18px]">download</span> Exportar Datos
+                                <span className="material-symbols-outlined text-[18px]">download</span>
+                                Exportar Datos
                             </button>
                             <Link
                                 to="/documents/new"
-                                className="px-4 py-2 bg-black text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-zinc-800 transition-all cursor-pointer shadow-sm active:scale-95"
+                                style={{ backgroundColor: SB_COLORS.PURPLE }}
+                                className={headerButtonClass}
                             >
-                                <span className="material-symbols-outlined text-white text-[18px]">add</span>
-                                Nuevo Trámite
+                                <span className="material-symbols-outlined text-[18px]">add</span>
+                                Nuevo Tr?mite
                             </Link>
                         </div>
                     </div>
@@ -168,7 +177,7 @@ export function HomePage() {
                     </div>
                 ) : null}
 
-                {/* KPIs Dinámicos */}
+                {/* KPIs Din?micos */}
                 <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-gutter mb-section-gap">
                     {kpis.map((kpi, idx) => (
                         <div key={idx} className="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl flex flex-col justify-between min-h-40 shadow-sm">
@@ -187,10 +196,10 @@ export function HomePage() {
                 </section>
 
                 <section className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-                    {/* Gráfico de barras real */}
+                    {/* Gr?fico de barras real */}
                     <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
                         <div className="p-stack-md bg-surface-container-low flex justify-between items-center border-b border-outline-variant">
-                            <h4 className="text-sm font-semibold text-sb-dark-purple">Distribución de Actividades</h4>
+                            <h4 className="text-sm font-semibold text-sb-dark-purple">Distribuci?n de Actividades</h4>
                             <p className="text-xs text-on-surface-variant">Basado en registros actuales</p>
                         </div>
                         <div className="p-stack-md flex-1 min-h-[300px] flex flex-col justify-end">
@@ -221,26 +230,25 @@ export function HomePage() {
                         </div>
                     </div>
 
-                    {/* Accesos Rápidos */}
+                    {/* Accesos R?pidos */}
                     <div className="space-y-gutter">
                         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
-                            <h4 className="text-sm font-semibold text-sb-dark-purple mb-stack-md">Accesos Rápidos</h4>
+                            <h4 className="text-sm font-semibold text-sb-dark-purple mb-stack-md">Accesos R?pidos</h4>
                             <div className="grid grid-cols-2 gap-stack-sm">
-                                <Link
-                                    to="/documents"
-                                    className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer"
-                                >
-                                    <span className="material-symbols-outlined text-white mb-1 group-hover:scale-110 transition-transform">description</span>
-                                    <span className="text-xs font-medium">Docs</span>
-                                </Link>
-                                <button
-                                    type="button"
-                                    className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer"
-                                    title="Próximamente"
-                                >
-                                    <span className="material-symbols-outlined text-white mb-1 group-hover:scale-110 transition-transform">person_search</span>
-                                    <span className="text-xs font-medium">Usuarios</span>
-                                </button>
+                                {[
+                                    { icon: 'description', label: 'Docs', path: '/documents' },
+                                    { icon: 'person_search', label: 'Usuarios', path: '/users' },
+                                ].map((item) => (
+                                    <button
+                                        key={item.path}
+                                        type="button"
+                                        onClick={() => navigate(item.path)}
+                                        className="flex flex-col items-center justify-center p-stack-sm rounded-lg bg-black text-white hover:bg-zinc-700 transition-all text-center group cursor-pointer"
+                                    >
+                                        <span className="material-symbols-outlined text-white mb-1 group-hover:scale-110 transition-transform">{item.icon}</span>
+                                        <span className="text-xs font-medium">{item.label}</span>
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
