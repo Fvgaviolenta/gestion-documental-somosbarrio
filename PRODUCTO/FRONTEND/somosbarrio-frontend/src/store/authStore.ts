@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 
 import {
   loginRequest,
+  logoutRequest,
   refreshRequest,
   type UserDto,
 } from '@/features/auth/api/auth.api'
@@ -13,7 +14,7 @@ interface AuthState {
   accessToken: string | null
   refreshToken: string | null
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   refresh: () => Promise<string | null>
   hasRole: (...roles: Role[]) => boolean
 }
@@ -27,15 +28,29 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         const data = await loginRequest(email, password)
+        
+        const sanitizedRoles = data.user?.roles.map(role => 
+          role.startsWith('ROLE_') ? role.replace('ROLE_', '') : role
+        ) as Role[]
+
         set({
-          user: data.user,
+          user: data.user ? { ...data.user, roles: sanitizedRoles } : null,
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
         })
       },
 
-      logout: () => {
+      logout: async () => {
+        const rt = get().refreshToken
+        if (rt && !rt.startsWith('mock')) {
+          try {
+            await logoutRequest(rt)
+          } catch {
+            // Cierre de sesión idempotente en servidor
+          }
+        }
         set({ user: null, accessToken: null, refreshToken: null })
+        localStorage.clear()
       },
 
       refresh: async () => {
@@ -43,10 +58,15 @@ export const useAuthStore = create<AuthState>()(
         if (!rt) return null
         try {
           const data = await refreshRequest(rt)
+          
+          const sanitizedRoles = data.user?.roles.map(role => 
+            role.startsWith('ROLE_') ? role.replace('ROLE_', '') : role
+          ) as Role[]
+
           set({
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
-            user: data.user,
+            user: data.user ? { ...data.user, roles: sanitizedRoles } : null,
           })
           return data.accessToken
         } catch {

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import axios from 'axios'
@@ -10,14 +11,12 @@ import { APP_NAME } from '@/shared/lib/constants'
 import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/login.schema'
 import { useAuthStore } from '@/store/authStore'
 
-const MOCK_WORKER_EMAIL = 'trabajador@demo.cl'
-const MOCK_WORKER_PASSWORD = '123456'
-
 export function WorkerLoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
   const logout = useAuthStore((s) => s.logout)
   const hasRole = useAuthStore((s) => s.hasRole)
+  const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -26,22 +25,6 @@ export function WorkerLoginPage() {
 
   const mutation = useMutation({
     mutationFn: async ({ email, password }: LoginFormValues) => {
-      // Modo mock para avanzar frontend sin backend/DB.
-      if (email === MOCK_WORKER_EMAIL && password === MOCK_WORKER_PASSWORD) {
-        useAuthStore.setState({
-          accessToken: 'mock-worker-token',
-          refreshToken: 'mock-worker-refresh',
-          user: {
-            id: 'worker-demo',
-            email: MOCK_WORKER_EMAIL,
-            firstName: 'Trabajador',
-            lastName: 'Demo',
-            roles: ['COLABORADOR'],
-          },
-        })
-        return
-      }
-
       await login(email, password)
       if (!hasRole('COLABORADOR')) {
         logout()
@@ -61,6 +44,9 @@ export function WorkerLoginPage() {
     const err = mutation.error
     if (!err.response) {
       return 'No hay conexión con el API. ¿Está el backend activo?'
+    }
+    if (err.response.status === 502) {
+      return 'Error 502: el backend no responde. Asegúrate de tener corriendo Docker en tu terminal.'
     }
     const data = err.response.data as ApiErrorBody | undefined
     return data?.message ?? err.message
@@ -102,13 +88,22 @@ export function WorkerLoginPage() {
           <label htmlFor="worker-password" className="mb-1 block text-sm font-medium">
             Contraseña
           </label>
-          <input
-            id="worker-password"
-            type="password"
-            autoComplete="current-password"
-            className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2"
-            {...form.register('password')}
-          />
+          <div className="relative flex items-center">
+            <input
+              id="worker-password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2 pr-16"
+              {...form.register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 text-xs font-medium text-zinc-500 hover:text-black cursor-pointer select-none"
+            >
+              {showPassword ? 'Ocultar' : 'Mostrar'}
+            </button>
+          </div>
           {form.formState.errors.password ? (
             <p className="mt-1 text-sm text-[var(--color-destructive)]" role="alert">
               {form.formState.errors.password.message}
@@ -140,12 +135,6 @@ export function WorkerLoginPage() {
           Iniciar sesión aquí
         </Link>
       </p>
-
-      <div className="mt-4 rounded-lg border border-dashed border-[var(--color-border)] p-3 text-xs text-[var(--color-muted-foreground)]">
-        <p className="font-semibold">Modo mock (sin backend)</p>
-        <p>Correo: trabajador@demo.cl</p>
-        <p>Clave: 123456</p>
-      </div>
     </div>
   )
 }

@@ -1,18 +1,17 @@
-﻿import { useMemo, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import {
-  useActivities,
-} from '@/features/activities/hooks/useActivities'
+import { api } from '@/shared/lib/axios'
 import { formatDateOnly } from '@/shared/lib/formatters'
 import type { ActivityStatus } from '@/shared/types/enums'
+import { SB_COLORS } from '@/shared/constants/colors'
 
 const STATUS_LABELS: Record<string, string> = {
   PLANIFICADA: 'Planificada',
   EN_CURSO: 'En curso',
   FINALIZADA: 'Finalizada',
   CANCELADA: 'Cancelada',
-};
+}
 
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
@@ -28,27 +27,84 @@ const StatusBadge = ({ status }: { status: string }) => {
   )
 }
 
+interface BackendActivity {
+  id: string | number
+  title?: string
+  name?: string
+  description?: string
+  territory?: string
+  startDate?: string
+  start_date?: string
+  status?: string
+}
+
 export function ActivitiesListPage() {
   const [status, setStatus] = useState<ActivityStatus | ''>('')
+  const [activities, setActivities] = useState<BackendActivity[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const filter = useMemo(
-    () => ({ page: 0, size: 20, status }),
-    [status],
-  )
-  const { data, isLoading, isError } = useActivities(filter)
+  useEffect(() => {
+    let canceled = false
+
+    async function fetchActivities() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const response = await api.get('/api/v1/activities', {
+          params: {
+            status: status || undefined,
+          },
+        })
+
+        if (canceled) return
+
+        const data = response.data
+        const items: BackendActivity[] = Array.isArray(data) ? data : data?.content ?? []
+
+        setActivities(
+          items.map((item: BackendActivity) => ({
+            id: String(item.id ?? ''),
+            title: String(item.title ?? item.name ?? 'Sin título'),
+            description: item.description ? String(item.description) : undefined,
+            territory: String(item.territory ?? ''),
+            startDate: String(item.startDate ?? item.start_date ?? ''),
+            status: String(item.status ?? 'PLANIFICADA'),
+          })),
+        )
+      } catch {
+        if (!canceled) {
+          setError('No se pudieron cargar las actividades.')
+        }
+      } finally {
+        if (!canceled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void fetchActivities()
+
+    return () => {
+      canceled = true
+    }
+  }, [status])
+
+  const noData = !loading && !error && activities.length === 0
 
   return (
     <div className="p-margin bg-surface min-h-screen">
       <div className="max-w-container-max mx-auto">
         
         <div className="mb-section-gap">
-          <h2 className="text-4xl font-bold text-primary">Gestión de Actividades</h2>
+          <h2 className="text-4xl font-bold text-sb-dark-purple">Gestión de Actividades</h2>
           <p className="text-base text-on-surface-variant">Administración y seguimiento de operativos territoriales.</p>
         </div>
 
         <div className="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl shadow-sm mb-stack-lg flex flex-col md:flex-row gap-4 items-end">
           <div className="w-full md:w-48">
-            <label className="text-xs font-bold text-primary uppercase mb-2 block">Estado</label>
+            <label className="text-xs font-bold text-sb-dark-purple uppercase mb-2 block">Estado</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ActivityStatus | '')}
@@ -62,10 +118,12 @@ export function ActivitiesListPage() {
               ))}
             </select>
           </div>
-          <Link to="/activities/new" className="w-full md:w-auto">
-            <button className="w-full md:w-auto px-6 py-2 bg-black text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-700 transition-all active:scale-95 shadow-sm">
-                <span className="material-symbols-outlined text-white text-lg">add</span>
-                Nueva Actividad
+            <Link to="/activities/new" className="w-full md:w-auto">
+            <button 
+              style={{ backgroundColor: SB_COLORS.PURPLE }}
+              className="w-full md:w-auto px-6 py-2 text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95 shadow-sm cursor-pointer text-sm">
+              <span className="material-symbols-outlined text-white text-lg">add</span>
+              <span>Nueva Actividad</span>
             </button>
           </Link>
         </div>
@@ -73,7 +131,7 @@ export function ActivitiesListPage() {
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-surface-container-low border-b border-outline-variant text-primary uppercase text-[10px] tracking-widest font-bold">
+              <tr className="bg-surface-container-low border-b border-outline-variant text-sb-dark-purple uppercase text-[10px] tracking-widest font-bold">
                 <th className="px-6 py-4">Actividad</th>
                 <th className="px-6 py-4">Territorio</th>
                 <th className="px-6 py-4">Fecha Programada</th>
@@ -82,35 +140,40 @@ export function ActivitiesListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant">
-              {isLoading && (
+              {loading && (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-on-surface-variant animate-pulse">Cargando registros...</td>
                 </tr>
               )}
-              {isError && (
+              {error && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-error font-medium">Error al conectar con el servidor.</td>
+                  <td colSpan={5} className="px-6 py-12 text-center text-error font-medium">{error}</td>
                 </tr>
               )}
-              {data?.content.map((activity) => (
+              {noData && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-on-surface-variant">No hay actividades registradas.</td>
+                </tr>
+              )}
+              {activities.map((activity) => (
                 <tr key={activity.id} className="hover:bg-surface-container-lowest transition-colors group">
                   <td className="px-6 py-4">
-                    <p className="font-bold text-primary text-sm">{activity.title}</p>
+                    <p className="font-bold text-sb-dark-purple text-sm">{activity.title}</p>
                     <p className="text-xs text-on-surface-variant line-clamp-1">{activity.description || 'Sin descripción'}</p>
                   </td>
                   <td className="px-6 py-4 text-sm text-on-surface-variant font-medium">{activity.territory}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-primary">{formatDateOnly(activity.startDate)}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-sb-dark-purple">{formatDateOnly(activity.startDate)}</td>
                   <td className="px-6 py-4">
-                    <StatusBadge status={activity.status} />
+                  <StatusBadge status={activity.status ?? 'PLANIFICADA'} />
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <Link to={`/activities/${activity.id}/edit`}>
-                        <button className="rounded-lg bg-black p-2 text-white transition-colors hover:bg-zinc-700">
+                        <button className="rounded-lg bg-sb-purple p-2 text-white transition-colors hover:bg-sb-purple/90">
                           <span className="material-symbols-outlined text-xl">edit</span>
                         </button>
                       </Link>
-                      <button className="rounded-lg bg-black p-2 text-white transition-colors hover:bg-zinc-700">
+                      <button className="rounded-lg bg-surface-variant p-2 text-on-surface transition-colors hover:bg-surface-container-low">
                         <span className="material-symbols-outlined text-xl">delete</span>
                       </button>
                     </div>

@@ -5,11 +5,14 @@ import { WorkerLoginPage } from '@/features/auth/pages/WorkerLoginPage'
 import { ActivitiesListPage } from '@/features/activities/pages/ActivitiesListPage'
 import { CreateActivityPage } from '@/features/activities/pages/CreateActivityPage'
 import { EditActivityPage } from '@/features/activities/pages/EditActivityPage'
+import { CreateDocumentPage } from '@/features/documents/pages/CreateDocumentPage'
+import { DocumentDetailPage } from '@/features/documents/pages/DocumentDetailPage'
+import { DocumentsListPage } from '@/features/documents/pages/DocumentsListPage'
 import { HomePage } from '@/features/home/pages/HomePage'
 import { WorkerReportsPage } from '@/features/reports/pages/WorkerReportsPage'
 import { WorkerConfigPage } from '@/features/worker-menu/pages/WorkerConfigPage'
 import { WorkerHelpPage } from '@/features/worker-menu/pages/WorkerHelpPage'
-import { WorkerMyRecordsPage } from '@/features/worker-menu/pages/WorkerMyRecordsPage'
+import { WorkerHomePage } from '@/features/worker-menu/pages/WorkerHomePage'
 import { WorkerNotesPage } from '@/features/worker-menu/pages/WorkerNotesPage'
 import { WorkerLogbookPage } from '@/features/worker-logbook/pages/WorkerLogbookPage'
 import { WorkerMinutesPage } from '@/features/worker-minutes/pages/WorkerMinutesPage'
@@ -19,6 +22,7 @@ import { AuthLayout } from './layouts/AuthLayout'
 import { WorkerLayout } from './layouts/WorkerLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { WorkerRoute } from './WorkerRoute'
+import { UsersListPage } from '@/features/users/pages/UsersListPage'
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +48,10 @@ export const router = createBrowserRouter([
       { path: 'activities/new', element: <CreateActivityPage /> },
       { path: 'activities/:id/edit', element: <EditActivityPage /> },
       { path: 'reports', element: <WorkerReportsPage /> },
+      { path: 'documents', element: <DocumentsListPage /> },
+      { path: 'documents/new', element: <CreateDocumentPage /> },
+      { path: 'documents/:id', element: <DocumentDetailPage /> },
+      { path: 'users', element: <UsersListPage /> },
     ],
   },
   {
@@ -54,8 +62,8 @@ export const router = createBrowserRouter([
       </WorkerRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="mis-registros" replace /> },
-      { path: 'mis-registros', element: <WorkerMyRecordsPage /> },
+      { index: true, element: <WorkerHomePage /> },
+      { path: 'mis-registros', element: <Navigate to="/trabajador" replace /> },
       { path: 'configuracion', element: <WorkerConfigPage /> },
       { path: 'ayuda', element: <WorkerHelpPage /> },
       { path: 'notas', element: <WorkerNotesPage /> },
