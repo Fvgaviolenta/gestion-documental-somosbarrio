@@ -49,18 +49,17 @@ export default function SideNavBar() {
                     <span className="material-symbols-outlined">bar_chart</span>
                     <span className="text-sm font-semibold">Reportes</span>
                 </Link>
-                
-                <Link to="/settings" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/settings') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
-                    <span className="material-symbols-outlined">settings</span>
-                    <span className="text-sm font-semibold">Configuración</span>
+
+                <Link 
+                    to="/users" 
+                    className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${location.pathname.startsWith('/users') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                    <span className="material-symbols-outlined">manage_accounts</span>
+                    <span className="text-sm font-semibold">Gestión Usuarios</span>
                 </Link>
+
             </nav>
             
             <div className="mt-auto pt-stack-md border-t border-outline-variant space-y-1">
-                <a className="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="#">
-                    <span className="material-symbols-outlined">help</span>
-                    <span className="text-sm font-semibold">Soporte</span>
-                </a>
                 <button
                     type="button"
                     onClick={handleLogout}

@@ -131,7 +131,7 @@ export function HomePage() {
             label: 'Eficiencia del Portal',
             val: '100%',
             icon: 'speed',
-            tag: '?ptimo',
+            tag: 'Óptimo',
         },
     ]
 
@@ -147,7 +147,7 @@ export function HomePage() {
                         <div>
                             <h2 className="text-4xl font-bold text-sb-dark-purple">Control Central</h2>
                             <p className="text-base text-on-surface-variant">
-                                Visualizaci?n en tiempo real del estado operativo de Somos Barrio.</p>
+                                Visualización en tiempo real del estado operativo de Somos Barrio.</p>
                         </div>
                         <div className="flex gap-stack-sm">
                             <button
@@ -165,7 +165,7 @@ export function HomePage() {
                                 className={headerButtonClass}
                             >
                                 <span className="material-symbols-outlined text-[18px]">add</span>
-                                Nuevo Tr?mite
+                                Nuevo Trámite
                             </Link>
                         </div>
                     </div>
@@ -177,7 +177,6 @@ export function HomePage() {
                     </div>
                 ) : null}
 
-                {/* KPIs Din?micos */}
                 <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-gutter mb-section-gap">
                     {kpis.map((kpi, idx) => (
                         <div key={idx} className="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl flex flex-col justify-between min-h-40 shadow-sm">
@@ -196,10 +195,9 @@ export function HomePage() {
                 </section>
 
                 <section className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-                    {/* Gr?fico de barras real */}
                     <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
                         <div className="p-stack-md bg-surface-container-low flex justify-between items-center border-b border-outline-variant">
-                            <h4 className="text-sm font-semibold text-sb-dark-purple">Distribuci?n de Actividades</h4>
+                            <h4 className="text-sm font-semibold text-sb-dark-purple">Distribución de Actividades</h4>
                             <p className="text-xs text-on-surface-variant">Basado en registros actuales</p>
                         </div>
                         <div className="p-stack-md flex-1 min-h-[300px] flex flex-col justify-end">
@@ -230,10 +228,10 @@ export function HomePage() {
                         </div>
                     </div>
 
-                    {/* Accesos R?pidos */}
+                    {/* Accesos Rápidos */}
                     <div className="space-y-gutter">
                         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
-                            <h4 className="text-sm font-semibold text-sb-dark-purple mb-stack-md">Accesos R?pidos</h4>
+                            <h4 className="text-sm font-semibold text-sb-dark-purple mb-stack-md">Accesos Rápidos</h4>
                             <div className="grid grid-cols-2 gap-stack-sm">
                                 {[
                                     { icon: 'description', label: 'Docs', path: '/documents' },
