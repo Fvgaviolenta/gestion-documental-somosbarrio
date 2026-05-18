@@ -1,6 +1,14 @@
 import type { PagedResponse } from '@/shared/types/api'
 
-export type MinuteStatus = 'BORRADOR' | 'EN_REVISION' | 'APROBADA' | 'RECHAZADA'
+export type MinuteStatus = 'BORRADOR' | 'EN_REVISION' | 'APROBADA'
+
+export interface MinuteAttachmentDto {
+  id: string
+  originalName: string
+  mimeType?: string
+  sizeBytes?: number
+  uploadedAt?: string
+}
 
 export interface MinuteDto {
   id: string
@@ -10,8 +18,16 @@ export interface MinuteDto {
   content?: string
   status: MinuteStatus
   statusLabel?: string
+  authorId?: string
+  authorName?: string
   createdAt?: string
   updatedAt?: string
+  attachments?: MinuteAttachmentDto[]
+}
+
+export interface UpdateMinutePayload {
+  title: string
+  content?: string
 }
 
 export interface CreateMinutePayload {

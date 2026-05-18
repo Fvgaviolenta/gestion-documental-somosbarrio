@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
+import { useSyncCurrentUser } from '@/features/auth/hooks/useSyncCurrentUser'
 import { APP_NAME } from '@/shared/lib/constants'
 import { useAuthStore } from '@/store/authStore'
 
@@ -58,10 +59,17 @@ function CloseMenuIcon() {
 }
 
 export function WorkerLayout() {
+  useSyncCurrentUser()
   const location = useLocation()
   const navigate = useNavigate()
   const logout = useAuthStore((s) => s.logout)
+  const user = useAuthStore((s) => s.user)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  const workerName =
+    user?.firstName || user?.lastName
+      ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
+      : user?.email
 
   useEffect(() => {
     setMenuOpen(false)
@@ -97,6 +105,9 @@ export function WorkerLayout() {
             <h1 className="truncate text-base font-semibold text-[var(--color-on-surface)]">
               {APP_NAME}
             </h1>
+            {workerName ? (
+              <p className="truncate text-xs text-[var(--color-on-surface-variant)]">{workerName}</p>
+            ) : null}
           </div>
           <button
             type="button"

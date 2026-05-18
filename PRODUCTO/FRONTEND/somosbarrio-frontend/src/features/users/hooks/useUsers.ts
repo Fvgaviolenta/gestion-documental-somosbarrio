@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { usersApi, type CreateUserDTO } from '@/features/users/api/users.api';
+import {
+  usersApi,
+  type CreateUserDTO,
+  type UpdateUserDTO,
+} from '@/features/users/api/users.api';
 
 // Factoría de claves para mantener el caché de usuarios ordenado
 export const userKeys = {
@@ -39,6 +43,17 @@ export function useDeleteUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => usersApi.delete(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: userKeys.all });
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserDTO }) =>
+      usersApi.update(id, data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: userKeys.all });
     },
