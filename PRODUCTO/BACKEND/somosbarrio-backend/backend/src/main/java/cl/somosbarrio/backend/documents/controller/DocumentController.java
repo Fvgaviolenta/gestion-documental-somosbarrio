@@ -125,6 +125,15 @@ public class DocumentController {
                 documentService.changeStatus(id, DocumentStatus.EN_REVISION, actorId, roles));
     }
 
+    @PatchMapping("/{id}/reopen")
+    @Operation(summary = "Reabrir documento rechazado (RECHAZADA → BORRADOR)")
+    public ResponseEntity<DocumentDto> reopen(@PathVariable UUID id, Authentication auth) {
+        UUID actorId = UUID.fromString((String) auth.getPrincipal());
+        Set<String> roles = extractRoles(auth);
+        return ResponseEntity.ok(
+                documentService.changeStatus(id, DocumentStatus.BORRADOR, actorId, roles));
+    }
+
     @PatchMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @Operation(summary = "Aprobar documento (EN_REVISION → APROBADA)")

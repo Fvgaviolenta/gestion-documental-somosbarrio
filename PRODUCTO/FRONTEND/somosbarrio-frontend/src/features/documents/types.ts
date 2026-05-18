@@ -15,8 +15,20 @@ export interface DocumentDto {
   fieldValues?: string
   status: DocumentStatus
   statusLabel?: string
+  rejectionReason?: string
+  generatedPdfPath?: string
+  createdByName?: string
   createdAt?: string
   updatedAt?: string
+  attachments?: DocumentAttachmentDto[]
+}
+
+export interface DocumentAttachmentDto {
+  id: string
+  originalFilename: string
+  contentType?: string
+  sizeBytes?: number
+  createdAt?: string
 }
 
 export interface DocumentTemplateDto {
@@ -25,6 +37,27 @@ export interface DocumentTemplateDto {
   name: string
   documentType: DocumentType
   description?: string
+  fieldsSchema?: string
+  templateFilePath?: string
+  isActive?: boolean
+}
+
+export interface UpdateDocumentPayload {
+  title: string
+  fieldValues?: string
+}
+
+export interface RejectDocumentPayload {
+  rejectionReason: string
+}
+
+export interface TemplateFieldDefinition {
+  key: string
+  label: string
+  type: 'text' | 'textarea' | 'date' | 'time' | 'month' | string
+  required?: boolean
+  minLength?: number
+  maxLength?: number
 }
 
 export interface CreateDocumentPayload {
