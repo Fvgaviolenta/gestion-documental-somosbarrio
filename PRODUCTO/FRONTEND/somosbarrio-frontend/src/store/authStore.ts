@@ -28,8 +28,13 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         const data = await loginRequest(email, password)
+        
+        const sanitizedRoles = data.user?.roles.map(role => 
+          role.startsWith('ROLE_') ? role.replace('ROLE_', '') : role
+        ) as Role[]
+
         set({
-          user: data.user,
+          user: data.user ? { ...data.user, roles: sanitizedRoles } : null,
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
         })
@@ -53,10 +58,15 @@ export const useAuthStore = create<AuthState>()(
         if (!rt) return null
         try {
           const data = await refreshRequest(rt)
+          
+          const sanitizedRoles = data.user?.roles.map(role => 
+            role.startsWith('ROLE_') ? role.replace('ROLE_', '') : role
+          ) as Role[]
+
           set({
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
-            user: data.user,
+            user: data.user ? { ...data.user, roles: sanitizedRoles } : null,
           })
           return data.accessToken
         } catch {

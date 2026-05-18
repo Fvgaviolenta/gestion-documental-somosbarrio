@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import axios from 'axios'
@@ -10,15 +11,13 @@ import { APP_NAME } from '@/shared/lib/constants'
 import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/login.schema'
 import { useAuthStore } from '@/store/authStore'
 
-const MOCK_ADMIN_EMAIL = 'admin@demo.cl'
-const MOCK_ADMIN_PASSWORD = 'admin123'
-
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const accessToken = useAuthStore((s) => s.accessToken)
   const user = useAuthStore((s) => s.user)
   const login = useAuthStore((s) => s.login)
+  const [showPassword, setShowPassword] = useState(false)
 
   const from = (() => {
     const s = location.state as { from?: string } | undefined
@@ -33,20 +32,7 @@ export function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: async ({ email, password }: LoginFormValues) => {
-      if (email === MOCK_ADMIN_EMAIL && password === MOCK_ADMIN_PASSWORD) {
-        useAuthStore.setState({
-          accessToken: 'mock-admin-token',
-          refreshToken: 'mock-admin-refresh',
-          user: {
-            id: 'admin-demo',
-            email: MOCK_ADMIN_EMAIL,
-            firstName: 'Administrador',
-            lastName: 'Demo',
-            roles: ['ADMIN'],
-          },
-        })
-        return
-      }
+      // Directo al backend sin pasar por cortocircuitos mock
       await login(email, password)
     },
     onSuccess: () => navigate(from, { replace: true }),
@@ -65,14 +51,14 @@ export function LoginPage() {
     }
     const err = mutation.error
     if (!err.response) {
-      return 'No hay conexión con el API. ¿Está el backend en marcha en el puerto 8080? (En dev, VITE_API_URL=/api/v1 usa el proxy de Vite.)'
+      return 'No hay conexión con el API. ¿Está el backend en marcha en el puerto 8080?'
     }
     const data = err.response.data as ApiErrorBody | undefined
     return data?.message ?? err.message
   })()
 
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-background)] p-8 shadow-sm">
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-background)] p-8 shadow-sm w-full max-w-md">
       <div className="mb-8 text-center">
         <h1 className="text-xl font-semibold text-[var(--color-foreground)]">
           {APP_NAME}
@@ -109,13 +95,22 @@ export function LoginPage() {
           <label htmlFor="password" className="mb-1 block text-sm font-medium">
             Contraseña
           </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2"
-            {...form.register('password')}
-          />
+          <div className="relative flex items-center">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2 pr-16"
+              {...form.register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 text-xs font-medium text-zinc-500 hover:text-black cursor-pointer select-none"
+            >
+              {showPassword ? 'Ocultar' : 'Mostrar'}
+            </button>
+          </div>
           {form.formState.errors.password ? (
             <p className="mt-1 text-sm text-[var(--color-destructive)]" role="alert">
               {form.formState.errors.password.message}
@@ -147,12 +142,6 @@ export function LoginPage() {
           Iniciar sesión aquí
         </Link>
       </p>
-
-      <div className="mt-4 rounded-lg border border-dashed border-[var(--color-border)] p-3 text-xs text-[var(--color-muted-foreground)]">
-        <p className="font-semibold">Modo mock (sin backend)</p>
-        <p>Correo: {MOCK_ADMIN_EMAIL}</p>
-        <p>Clave: {MOCK_ADMIN_PASSWORD}</p>
-      </div>
     </div>
   )
 }

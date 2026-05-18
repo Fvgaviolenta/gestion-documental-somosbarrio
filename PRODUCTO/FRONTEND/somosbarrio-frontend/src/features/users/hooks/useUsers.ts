@@ -27,7 +27,6 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: (payload: CreateUserDTO) => usersApi.create(payload),
     onSuccess: () => {
-      // Invalida el caché de usuarios para refrescar la tabla en tiempo real
       void qc.invalidateQueries({ queryKey: userKeys.all });
     },
   });
