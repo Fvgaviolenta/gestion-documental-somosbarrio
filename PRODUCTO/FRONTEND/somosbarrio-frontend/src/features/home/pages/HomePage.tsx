@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { ExportDocumentsDialog } from '@/features/documents/components/ExportDocumentsDialog'
+import { useAuthStore } from '@/store/authStore'
 import { api } from '@/shared/lib/axios'
 import { SB_COLORS } from '@/shared/constants/colors'
 
@@ -37,6 +38,10 @@ export function HomePage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [exportOpen, setExportOpen] = useState(false)
+
+    // Lógica de roles institucional
+    const hasRole = useAuthStore((s) => s.hasRole)
+    const isAdmin = hasRole('ADMINISTRADOR')
 
     useEffect(() => {
         let canceled = false
@@ -177,6 +182,7 @@ export function HomePage() {
                     </div>
                 ) : null}
 
+                {/* KPIs */}
                 <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-gutter mb-section-gap">
                     {kpis.map((kpi, idx) => (
                         <div key={idx} className="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl flex flex-col justify-between min-h-40 shadow-sm">
@@ -194,7 +200,9 @@ export function HomePage() {
                     ))}
                 </section>
 
+                {/* Grid de Contenidos Inferiores */}
                 <section className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+                    {/* Gráfico de Distribución */}
                     <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
                         <div className="p-stack-md bg-surface-container-low flex justify-between items-center border-b border-outline-variant">
                             <h4 className="text-sm font-semibold text-sb-dark-purple">Distribución de Actividades</h4>
@@ -228,17 +236,26 @@ export function HomePage() {
                         </div>
                     </div>
 
-                    {/* Accesos Rápidos */}
+                    {/* Columna Derecha */}
                     <div className="space-y-gutter">
+                        {/* Accesos Rápidos Dinámicos */}
                         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
                             <h4 className="text-sm font-semibold text-sb-dark-purple mb-stack-md">Accesos Rápidos</h4>
                             <div className="grid grid-cols-2 gap-stack-sm">
-                                {[
-                                    { icon: 'description', label: 'Docs', path: '/documents' },
-                                    { icon: 'person_search', label: 'Usuarios', path: '/users' },
-                                    { icon: 'bar_chart', label: 'Reportes', path: '/reports' },
-                                    { icon: 'history', label: 'Auditoría', path: '/audit-logs' },
-                                ].map((item) => (
+                                {(isAdmin
+                                    ? [
+                                        { icon: 'description', label: 'Docs', path: '/documents' },
+                                        { icon: 'person_search', label: 'Usuarios', path: '/users' },
+                                        { icon: 'bar_chart', label: 'Reportes', path: '/reports' },
+                                        { icon: 'history', label: 'Auditoría', path: '/audit-logs' },
+                                      ]
+                                    : [
+                                        { icon: 'description', label: 'Docs', path: '/documents' },
+                                        { icon: 'assignment', label: 'Actas', path: '/minutes' },
+                                        { icon: 'search', label: 'Repositorio', path: '/repository' },
+                                        { icon: 'folder_open', label: 'Actividades', path: '/activities' },
+                                      ]
+                                ).map((item) => (
                                     <button
                                         key={item.path}
                                         type="button"
@@ -252,7 +269,7 @@ export function HomePage() {
                             </div>
                         </div>
 
-                        {/* Estado Servidores */}
+                        {/* Estado Servidores (Limpio) */}
                         <div className="relative overflow-hidden bg-primary-container text-on-primary-container border border-outline-variant rounded-xl p-stack-md shadow-sm">
                             <div className="relative z-10">
                                 <h4 className="text-sm font-semibold mb-2">Estado del Sistema</h4>

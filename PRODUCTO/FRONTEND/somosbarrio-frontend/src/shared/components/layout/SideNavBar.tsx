@@ -95,11 +95,13 @@ export default function SideNavBar() {
                     </Link>
                 )}
                 
-                {/* 9. Reportes */}
-                <Link to="/reports" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/reports') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
-                    <span className="material-symbols-outlined">bar_chart</span>
-                    <span className="text-sm font-semibold">Reportes</span>
-                </Link>
+                {/* 9. Reportes (Solo Admin - Corregido para evitar bucles en colaboradores) */}
+                {isAdmin && (
+                    <Link to="/reports" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/reports') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                        <span className="material-symbols-outlined">bar_chart</span>
+                        <span className="text-sm font-semibold">Reportes</span>
+                    </Link>
+                )}
 
                 {/* 10. Gestión Usuarios (Solo Admin) */}
                 {isAdmin && (
