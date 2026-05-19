@@ -236,6 +236,8 @@ export function HomePage() {
                                 {[
                                     { icon: 'description', label: 'Docs', path: '/documents' },
                                     { icon: 'person_search', label: 'Usuarios', path: '/users' },
+                                    { icon: 'bar_chart', label: 'Reportes', path: '/reports' },
+                                    { icon: 'history', label: 'Auditoría', path: '/audit-logs' },
                                 ].map((item) => (
                                     <button
                                         key={item.path}
@@ -256,7 +258,7 @@ export function HomePage() {
                                 <h4 className="text-sm font-semibold mb-2">Estado del Sistema</h4>
                                 <div className="flex items-center gap-3">
                                     <div className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse"></div>
-                                    <span className="text-sm opacity-90 font-medium">Backend Online (Port 8080)</span>
+                                    <span className="text-sm opacity-90 font-medium">Backend Online</span>
                                 </div>
                             </div>
                         </div>

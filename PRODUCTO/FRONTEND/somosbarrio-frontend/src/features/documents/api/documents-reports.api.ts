@@ -12,3 +12,18 @@ export async function downloadDocumentsExcelReport(from: string, to: string): Pr
   )
   downloadBlob(response.data, filename)
 }
+
+export async function downloadActivitiesExcelReport(
+  year: number,
+  month: number,
+): Promise<void> {
+  const response = await api.get<Blob>('/reports/activities', {
+    params: { year, month },
+    responseType: 'blob',
+  })
+  const filename = filenameFromContentDisposition(
+    response.headers['content-disposition'] as string | undefined,
+    `reporte_actividades_${year}_${String(month).padStart(2, '0')}.xlsx`,
+  )
+  downloadBlob(response.data, filename)
+}
