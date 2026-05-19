@@ -50,35 +50,36 @@ export function ExportDocumentsDialog({ open, onClose }: ExportDocumentsDialogPr
       aria-modal="true"
       aria-labelledby="export-documents-title"
     >
-      <div className="w-full max-w-md rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-5 shadow-lg">
-        <h3 id="export-documents-title" className="text-lg font-semibold">
+      {/* Caja del diálogo con fondo sólido institucional para evitar la transparencia */}
+      <div className="w-full max-w-md rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-lg text-on-surface">
+        <h3 id="export-documents-title" className="text-lg font-semibold text-sb-dark-purple">
           Exportar documentos
         </h3>
-        <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
+        <p className="mt-1 text-sm text-on-surface-variant">
           Descarga un Excel con los documentos creados en el rango de fechas (formato YYYY-MM-DD).
         </p>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="export-from" className="mb-1 block text-sm font-medium">
+            <label htmlFor="export-from" className="mb-1 block text-sm font-medium text-on-surface">
               Desde
             </label>
             <input
               id="export-from"
               type="date"
-              className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
               value={range.from}
               onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
             />
           </div>
           <div>
-            <label htmlFor="export-to" className="mb-1 block text-sm font-medium">
+            <label htmlFor="export-to" className="mb-1 block text-sm font-medium text-on-surface">
               Hasta
             </label>
             <input
               id="export-to"
               type="date"
-              className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
               value={range.to}
               onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
             />
@@ -86,7 +87,7 @@ export function ExportDocumentsDialog({ open, onClose }: ExportDocumentsDialogPr
         </div>
 
         {error ? (
-          <p className="mt-3 text-sm text-[var(--color-destructive)]" role="alert">
+          <p className="mt-3 text-sm text-sb-red" role="alert">
             {error}
           </p>
         ) : null}
@@ -95,7 +96,12 @@ export function ExportDocumentsDialog({ open, onClose }: ExportDocumentsDialogPr
           <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button type="button" onClick={onExport} disabled={loading || !range.from || !range.to}>
+          <Button 
+            type="button" 
+            onClick={onExport} 
+            disabled={loading || !range.from || !range.to}
+            className="bg-black text-white hover:bg-zinc-800"
+          >
             {loading ? 'Generando…' : 'Descargar Excel'}
           </Button>
         </div>
