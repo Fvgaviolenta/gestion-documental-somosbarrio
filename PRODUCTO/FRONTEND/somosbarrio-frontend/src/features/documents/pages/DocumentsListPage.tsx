@@ -9,6 +9,7 @@ import type { DocumentStatus, DocumentType } from '@/features/documents/types'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Button } from '@/shared/components/ui/button'
 import { formatDateOnly } from '@/shared/lib/formatters'
+import { SB_COLORS } from '@/shared/constants/colors'
 
 const STATUS_OPTIONS: Array<{ value: '' | DocumentStatus; label: string }> = [
   { value: '', label: 'Todos los estados' },
@@ -63,178 +64,188 @@ export function DocumentsListPage() {
   const totalPages = query.data?.totalPages ?? 1
 
   return (
-    <div className="p-margin">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeader
-          title="Documentos"
-          description="Listado de trámites y documentos institucionales."
-        />
-        <Link to="/documents/new">
-          <Button type="button">
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Nueva solicitud
-          </Button>
-        </Link>
-      </div>
-
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <label htmlFor="doc-search" className="mb-1 block text-sm font-medium">
-            Buscar
-          </label>
-          <input
-            id="doc-search"
-            type="search"
-            placeholder="Título, código o plantilla…"
-            className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+    <div className="min-h-screen p-margin bg-surface">
+      <div className="max-w-container-max mx-auto space-y-6">
+        
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <PageHeader
+            title="Documentos"
+            description="Listado de trámites y documentos institucionales."
           />
+          <Link to="/documents/new">
+            <Button 
+              type="button"
+              style={{ backgroundColor: SB_COLORS.PURPLE }}
+              className="text-white hover:opacity-90 font-bold px-4 py-2.5 shadow-sm flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Nueva solicitud
+            </Button>
+          </Link>
         </div>
-        <div>
-          <label htmlFor="doc-status-filter" className="mb-1 block text-sm font-medium">
-            Estado
-          </label>
-          <select
-            id="doc-status-filter"
-            className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm"
-            value={status}
-            onChange={(e) => {
-              setPage(0)
-              setStatus(e.target.value as '' | DocumentStatus)
-            }}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value || 'all'} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="doc-type-filter" className="mb-1 block text-sm font-medium">
-            Tipo
-          </label>
-          <select
-            id="doc-type-filter"
-            className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as '' | DocumentType)}
-          >
-            {TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value || 'all'} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="doc-activity-filter" className="mb-1 block text-sm font-medium">
-            Actividad
-          </label>
-          <select
-            id="doc-activity-filter"
-            className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm"
-            value={activityId}
-            onChange={(e) => {
-              setPage(0)
-              setActivityId(e.target.value)
-            }}
-          >
-            <option value="">Todas</option>
-            {(activitiesQuery.data?.content ?? []).map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.title}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      {query.isLoading ? (
-        <p className="text-sm text-[var(--color-muted-foreground)]">Cargando documentos…</p>
-      ) : query.isError ? (
-        <p className="text-sm text-[var(--color-destructive)]" role="alert">
-          No se pudieron cargar los documentos.
-        </p>
-      ) : filteredDocuments.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-muted-foreground)]">
-          No hay documentos con estos filtros.
-        </p>
-      ) : (
-        <>
-          <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] shadow-sm">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]/20">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Código / Título</th>
-                  <th className="px-4 py-3 font-semibold">Plantilla</th>
-                  <th className="px-4 py-3 font-semibold">Actividad</th>
-                  <th className="px-4 py-3 font-semibold">Estado</th>
-                  <th className="px-4 py-3 font-semibold">Creado</th>
-                  <th className="px-4 py-3 font-semibold" />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDocuments.map((doc) => (
-                  <tr key={doc.id} className="border-b border-[var(--color-border)] last:border-0">
-                    <td className="px-4 py-3">
-                      <p className="font-medium">{doc.title}</p>
-                      {doc.code ? (
-                        <p className="text-xs text-[var(--color-muted-foreground)]">{doc.code}</p>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-3">{doc.templateName ?? doc.documentType}</td>
-                    <td className="px-4 py-3">{doc.activityTitle ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      <DocumentStatusBadge status={doc.status} label={doc.statusLabel} />
-                    </td>
-                    <td className="px-4 py-3 text-[var(--color-muted-foreground)]">
-                      {formatDateOnly(doc.createdAt)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        to={`/documents/${doc.id}`}
-                        className="text-sm font-medium text-[var(--color-primary)] hover:underline"
-                      >
-                        Ver
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Panel de Filtros Estilizado */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl shadow-sm">
+          <div>
+            <label htmlFor="doc-search" className="mb-1.5 block text-sm font-semibold text-sb-dark-purple">
+              Buscar
+            </label>
+            <input
+              id="doc-search"
+              type="search"
+              placeholder="Título, código o plantilla…"
+              className="w-full rounded-lg border border-outline-variant px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sb-purple/30 transition-all"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
+          <div>
+            <label htmlFor="doc-status-filter" className="mb-1.5 block text-sm font-semibold text-sb-dark-purple">
+              Estado
+            </label>
+            <select
+              id="doc-status-filter"
+              className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sb-purple/30 transition-all"
+              value={status}
+              onChange={(e) => {
+                setPage(0)
+                setStatus(e.target.value as '' | DocumentStatus)
+              }}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value || 'all'} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="doc-type-filter" className="mb-1.5 block text-sm font-semibold text-sb-dark-purple">
+              Tipo
+            </label>
+            <select
+              id="doc-type-filter"
+              className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sb-purple/30 transition-all"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as '' | DocumentType)}
+            >
+              {TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value || 'all'} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="doc-activity-filter" className="mb-1.5 block text-sm font-semibold text-sb-dark-purple">
+              Actividad
+            </label>
+            <select
+              id="doc-activity-filter"
+              className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sb-purple/30 transition-all"
+              value={activityId}
+              onChange={(e) => {
+                setPage(0)
+                setActivityId(e.target.value)
+              }}
+            >
+              <option value="">Todas</option>
+              {(activitiesQuery.data?.content ?? []).map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-          {totalPages > 1 ? (
-            <div className="mt-4 flex items-center justify-between gap-2">
-              <p className="text-xs text-[var(--color-muted-foreground)]">
-                Página {page + 1} de {totalPages} · {query.data?.totalElements ?? 0} registros
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page + 1 >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Siguiente
-                </Button>
-              </div>
+        {query.isLoading ? (
+          <p className="text-sm text-on-surface-variant">Cargando documentos…</p>
+        ) : query.isError ? (
+          <p className="text-sm font-semibold text-sb-red" role="alert">
+            No se pudieron cargar los documentos.
+          </p>
+        ) : filteredDocuments.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-outline-variant bg-surface-container-lowest p-6 text-sm text-on-surface-variant text-center">
+            No hay documentos con estos filtros.
+          </p>
+        ) : (
+          <>
+            <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-outline-variant bg-surface-container-low">
+                  <tr>
+                    <th className="px-4 py-3 font-bold text-sb-dark-purple">Código / Título</th>
+                    <th className="px-4 py-3 font-bold text-sb-dark-purple">Plantilla</th>
+                    <th className="px-4 py-3 font-bold text-sb-dark-purple">Actividad</th>
+                    <th className="px-4 py-3 font-bold text-sb-dark-purple">Estado</th>
+                    <th className="px-4 py-3 font-bold text-sb-dark-purple">Creado</th>
+                    <th className="px-4 py-3 font-bold text-sb-dark-purple" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDocuments.map((doc) => (
+                    <tr key={doc.id} className="border-b border-outline-variant last:border-0 hover:bg-surface-container-low/20 transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-sb-dark-purple">{doc.title}</p>
+                        {doc.code ? (
+                          <p className="text-xs text-on-surface-variant">{doc.code}</p>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-on-surface font-medium">{doc.templateName ?? doc.documentType}</td>
+                      <td className="px-4 py-3 text-on-surface font-medium">{doc.activityTitle ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        <DocumentStatusBadge status={doc.status} label={doc.statusLabel} />
+                      </td>
+                      <td className="px-4 py-3 text-on-surface-variant font-medium">
+                        {formatDateOnly(doc.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          to={`/documents/${doc.id}`}
+                          className="text-sm font-bold text-sb-purple hover:text-sb-dark-purple hover:underline transition-colors"
+                        >
+                          Ver
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : null}
-        </>
-      )}
+
+            {totalPages > 1 ? (
+              <div className="mt-4 flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-on-surface-variant">
+                  Página {page + 1} de {totalPages} · {query.data?.totalElements ?? 0} registros
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-outline-variant hover:bg-surface-container-low"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-outline-variant hover:bg-surface-container-low"
+                    disabled={page + 1 >= totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
     </div>
   )
 }

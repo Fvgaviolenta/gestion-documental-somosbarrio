@@ -26,17 +26,17 @@ export function CreateActivityPage() {
     setIsSubmitting(true)
     setMessage(null)
 
-try {
+    try {
       const payload = {
         title: values.title,
         territory: values.territory,
         description: values.description || undefined,
         startDate: formatDateToISO(values.startDate),
-        status: 'PLANIFICADA',
       }
 
-      const response = await api.post('/api/v1/activities', payload)
-      if (response.status === 201) {
+      const response = await api.post('/activities', payload)
+      
+      if (response.status === 201 || response.status === 200) {
         navigate('/activities')
       } else {
         setMessage('No se pudo crear la actividad. Intenta nuevamente.')
@@ -70,7 +70,7 @@ try {
           />
 
           {message ? (
-            <p className='mt-3 text-sm text-[var(--color-destructive)]'>{message}</p>
+            <p className='mt-3 text-sm text-sb-red'>{message}</p>
           ) : null}
         </div>
       </div>
