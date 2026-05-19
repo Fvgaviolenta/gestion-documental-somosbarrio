@@ -13,6 +13,7 @@ import {
   useWorkerMinutesSubmit,
 } from '@/features/worker-minutes/hooks/useWorkerMinutesSubmit'
 import { useAuthStore } from '@/store/authStore'
+import { SB_COLORS } from '@/shared/constants/colors'
 
 function ImagePickerButton({
   inputRef,
@@ -39,7 +40,12 @@ function ImagePickerButton({
           e.target.value = ''
         }}
       />
-      <Button type="button" onClick={() => inputRef.current?.click()}>
+      <Button 
+        type="button" 
+        onClick={() => inputRef.current?.click()}
+        style={{ backgroundColor: SB_COLORS.PURPLE }}
+        className="text-white hover:opacity-90 font-semibold text-xs"
+      >
         Agregar imagen
       </Button>
     </div>
@@ -53,10 +59,10 @@ interface UploadedImage {
 }
 
 const tableShell =
-  'w-full overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-background)]'
+  'w-full overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm'
 const cellLabel =
-  'w-[38%] align-top border border-[var(--color-border)] bg-[var(--color-muted)]/25 px-3 py-2 text-sm font-medium text-[var(--color-foreground)]'
-const cellInput = 'align-top border border-[var(--color-border)] p-0'
+  'w-[38%] align-top border border-outline-variant bg-surface-container-low px-4 py-3 text-sm font-semibold text-sb-dark-purple'
+const cellInput = 'align-top border border-outline-variant p-0 bg-surface-container-lowest'
 
 export function WorkerMinutesPage() {
   const navigate = useNavigate()
@@ -247,448 +253,455 @@ export function WorkerMinutesPage() {
   }
 
   const inputClass =
-    'w-full border-0 bg-transparent px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2 focus:ring-inset rounded-none'
+    'w-full border-0 bg-transparent px-3 py-2.5 text-sm outline-none focus:bg-surface-container-low/30 transition-colors rounded-none'
   const textareaClass =
-    'min-h-28 w-full resize-y border-0 bg-transparent px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2 focus:ring-inset'
+    'min-h-28 w-full resize-y border-0 bg-transparent px-3 py-2.5 text-sm outline-none focus:bg-surface-container-low/30 transition-colors'
 
   return (
-    <section className="space-y-5">
-      <header>
-        <button
-          onClick={() => navigate('/trabajador')}
-          className="mb-2 flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
+    <div className="min-h-screen p-margin bg-surface">
+      <div className="max-w-container-max mx-auto space-y-5">
+        <header>
+          <button
+            onClick={() => navigate('/')}
+            className="mb-2 flex items-center gap-2 text-sm text-on-surface-variant hover:text-sb-dark-purple font-medium transition-colors"
+          >
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
+            Volver
+          </button>
+          <h2 className="text-3xl font-bold text-sb-dark-purple">Acta de actividades</h2>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Flujo sugerido: elaboración (colaborador/admin) — EN_REVISION — aprobación ADMINISTRADOR.
+          </p>
+        </header>
+
+        <form
+          className="space-y-4 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 shadow-sm"
+          onSubmit={submitDraft}
         >
-          <span className="material-symbols-outlined text-lg">arrow_back</span>
-          Volver
-        </button>
-        <h2 className="text-2xl font-bold text-[var(--color-foreground)]">Acta de actividades</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-          Flujo sugerido: elaboración (colaborador/admin) — EN_REVISION — aprobación ADMINISTRADOR.
-        </p>
-      </header>
-
-      <form
-        className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-4 shadow-sm"
-        onSubmit={submitDraft}
-      >
-        <div className={tableShell}>
-          <table className="w-full border-collapse text-left">
-            <tbody>
-              <tr>
-                <td className={cellLabel}>Número acta</td>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={numeroActa}
-                    onChange={(e) => setNumeroActa(e.target.value)}
-                    placeholder="Ej: 2025-042"
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className={cellLabel}>Proyecto</td>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={proyecto}
-                    onChange={(e) => setProyecto(e.target.value)}
-                    placeholder="Nombre del proyecto"
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className={cellLabel}>Comuna</td>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={comuna}
-                    onChange={(e) => setComuna(e.target.value)}
-                    placeholder="Comuna"
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className={cellLabel}>Barrio</td>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={barrio}
-                    onChange={(e) => setBarrio(e.target.value)}
-                    placeholder="Barrio o sector"
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className={cellLabel}>Reunión convocada por</td>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={reunionConvocadaPor}
-                    onChange={(e) => setReunionConvocadaPor(e.target.value)}
-                    placeholder="Persona u organización convocante"
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className={cellLabel}>Fecha de actividad</td>
-                <td className={cellInput}>
-                  <DateInput
-                    className={inputClass}
-                    value={fechaActividad}
-                    onChange={setFechaActividad}
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className={cellLabel}>Hora inicio</td>
-                <td className={cellInput}>
-                  <input
-                    type="time"
-                    className={inputClass}
-                    value={horaInicio}
-                    onChange={(e) => setHoraInicio(e.target.value)}
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className={cellLabel}>Hora término</td>
-                <td className={cellInput}>
-                  <input
-                    type="time"
-                    className={inputClass}
-                    value={horaTermino}
-                    onChange={(e) => setHoraTermino(e.target.value)}
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className={cellLabel}>Lugar reunión</td>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={lugarReunion}
-                    onChange={(e) => setLugarReunion(e.target.value)}
-                    placeholder="Dirección o referencia del lugar"
-                    required
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className={tableShell}>
-          <table className="w-full border-collapse text-left">
-            <tbody>
-              <tr>
-                <td className={cellLabel}>Motivo y/u objetivo de la reunión</td>
-                <td className={cellInput}>
-                  <textarea
-                    className={textareaClass}
-                    value={motivoObjetivo}
-                    onChange={(e) => setMotivoObjetivo(e.target.value)}
-                    placeholder="Describa el motivo y los objetivos de la reunión."
-                    required
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className={tableShell}>
-          <table className="w-full border-collapse text-left">
-            <tbody>
-              <tr>
-                <td className={cellLabel}>Resumen de temas tratados</td>
-                <td className={cellInput}>
-                  <textarea
-                    className={textareaClass}
-                    value={resumenTemas}
-                    onChange={(e) => setResumenTemas(e.target.value)}
-                    placeholder="Resumen de los temas abordados en la reunión."
-                    required
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className={tableShell}>
-          <table className="w-full border-collapse text-left">
-            <tbody>
-              <tr>
-                <td className={cellLabel}>Compromisos y responsabilidades</td>
-                <td className={cellInput}>
-                  <textarea
-                    className={textareaClass}
-                    value={compromisosResponsabilidades}
-                    onChange={(e) => setCompromisosResponsabilidades(e.target.value)}
-                    placeholder="Compromisos asumidos, plazos y responsables."
-                    required
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className={tableShell}>
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="bg-[var(--color-muted)]/15">
-                <th className="border border-[var(--color-border)] px-3 py-2 text-left text-sm font-semibold">
-                  Gestor barrial
-                </th>
-                <th className="border border-[var(--color-border)] px-3 py-2 text-left text-sm font-semibold">
-                  Acción
-                </th>
-                <th className="border border-[var(--color-border)] px-3 py-2 text-left text-sm font-semibold">
-                  Firma
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={gestorBarrial}
-                    onChange={(e) => setGestorBarrial(e.target.value)}
-                    placeholder="Nombre gestor barrial"
-                    required
-                  />
-                </td>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={accion}
-                    onChange={(e) => setAccion(e.target.value)}
-                    placeholder="Acción o compromiso asociado"
-                    required
-                  />
-                </td>
-                <td className="align-top border border-[var(--color-border)] p-2">
-                  <ImagePickerButton
-                    inputRef={firmaGestorInputRef}
-                    inputId="firma-gestor"
-                    onPick={(files) => {
-                      const [image] = createPreviewImages(files)
-                      setFirma(image ?? null)
-                    }}
-                  />
-                  {firma ? (
-                    <img
-                      src={firma.url}
-                      alt="Vista previa firma gestor barrial"
-                      className="mt-2 h-28 w-full rounded border border-[var(--color-border)] object-contain bg-white p-2"
+          <div className={tableShell}>
+            <table className="w-full border-collapse text-left">
+              <tbody>
+                <tr>
+                  <td className={cellLabel}>Número acta</td>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={numeroActa}
+                      onChange={(e) => setNumeroActa(e.target.value)}
+                      placeholder="Ej: 2025-042"
+                      required
                     />
-                  ) : (
-                    <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
-                      La vista previa aparece al elegir la imagen.
-                    </p>
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className={tableShell}>
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="bg-[var(--color-muted)]/15">
-                <th className="border border-[var(--color-border)] px-3 py-2 text-left text-sm font-semibold">
-                  Contraparte SPD
-                </th>
-                <th className="border border-[var(--color-border)] px-3 py-2 text-left text-sm font-semibold">
-                  Acción
-                </th>
-                <th className="border border-[var(--color-border)] px-3 py-2 text-left text-sm font-semibold">
-                  Firma
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={contraparteSpd}
-                    onChange={(e) => setContraparteSpd(e.target.value)}
-                    placeholder="Nombre contraparte SPD"
-                    required
-                  />
-                </td>
-                <td className={cellInput}>
-                  <input
-                    className={inputClass}
-                    value={accionContraparte}
-                    onChange={(e) => setAccionContraparte(e.target.value)}
-                    placeholder="Acción o compromiso asociado"
-                    required
-                  />
-                </td>
-                <td className="align-top border border-[var(--color-border)] p-2">
-                  <ImagePickerButton
-                    inputRef={firmaContraparteInputRef}
-                    inputId="firma-contraparte-spd"
-                    onPick={(files) => {
-                      const [image] = createPreviewImages(files)
-                      setFirmaContraparte(image ?? null)
-                    }}
-                  />
-                  {firmaContraparte ? (
-                    <img
-                      src={firmaContraparte.url}
-                      alt="Vista previa firma contraparte SPD"
-                      className="mt-2 h-28 w-full rounded border border-[var(--color-border)] object-contain bg-white p-2"
+                  </td>
+                </tr>
+                <tr>
+                  <td className={cellLabel}>Proyecto</td>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={proyecto}
+                      onChange={(e) => setProyecto(e.target.value)}
+                      placeholder="Nombre del proyecto"
+                      required
                     />
-                  ) : (
-                    <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
-                      La vista previa aparece al elegir la imagen.
+                  </td>
+                </tr>
+                <tr>
+                  <td className={cellLabel}>Comuna</td>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={comuna}
+                      onChange={(e) => setComuna(e.target.value)}
+                      placeholder="Comuna"
+                      required
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className={cellLabel}>Barrio</td>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={barrio}
+                      onChange={(e) => setBarrio(e.target.value)}
+                      placeholder="Barrio o sector"
+                      required
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className={cellLabel}>Reunión convocada por</td>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={reunionConvocadaPor}
+                      onChange={(e) => setReunionConvocadaPor(e.target.value)}
+                      placeholder="Persona u organización convocante"
+                      required
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className={cellLabel}>Fecha de actividad</td>
+                  <td className={cellInput}>
+                    <DateInput
+                      className={inputClass}
+                      value={fechaActividad}
+                      onChange={setFechaActividad}
+                      required
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className={cellLabel}>Hora inicio</td>
+                  <td className={cellInput}>
+                    <input
+                      type="time"
+                      className={inputClass}
+                      value={horaInicio}
+                      onChange={(e) => setHoraInicio(e.target.value)}
+                      required
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className={cellLabel}>Hora término</td>
+                  <td className={cellInput}>
+                    <input
+                      type="time"
+                      className={inputClass}
+                      value={horaTermino}
+                      onChange={(e) => setHoraTermino(e.target.value)}
+                      required
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className={cellLabel}>Lugar reunión</td>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={lugarReunion}
+                      onChange={(e) => setLugarReunion(e.target.value)}
+                      placeholder="Dirección o referencia del lugar"
+                      required
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className={tableShell}>
+            <table className="w-full border-collapse text-left">
+              <tbody>
+                <tr>
+                  <td className={cellLabel}>Motivo y/u objetivo de la reunión</td>
+                  <td className={cellInput}>
+                    <textarea
+                      className={textareaClass}
+                      value={motivoObjetivo}
+                      onChange={(e) => setMotivoObjetivo(e.target.value)}
+                      placeholder="Describa el motivo y los objetivos de la reunión."
+                      required
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className={tableShell}>
+            <table className="w-full border-collapse text-left">
+              <tbody>
+                <tr>
+                  <td className={cellLabel}>Resumen de temas tratados</td>
+                  <td className={cellInput}>
+                    <textarea
+                      className={textareaClass}
+                      value={resumenTemas}
+                      onChange={(e) => setResumenTemas(e.target.value)}
+                      placeholder="Resumen de los temas abordados en la reunión."
+                      required
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className={tableShell}>
+            <table className="w-full border-collapse text-left">
+              <tbody>
+                <tr>
+                  <td className={cellLabel}>Compromisos y responsabilidades</td>
+                  <td className={cellInput}>
+                    <textarea
+                      className={textareaClass}
+                      value={compromisosResponsabilidades}
+                      onChange={(e) => setCompromisosResponsabilidades(e.target.value)}
+                      placeholder="Compromisos asumidos, plazos y responsables."
+                      required
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className={tableShell}>
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="bg-surface-container-low">
+                  <th className="border border-outline-variant px-3 py-2 text-left text-sm font-semibold text-sb-dark-purple">
+                    Gestor barrial
+                  </th>
+                  <th className="border border-outline-variant px-3 py-2 text-left text-sm font-semibold text-sb-dark-purple">
+                    Acción
+                  </th>
+                  <th className="border border-outline-variant px-3 py-2 text-left text-sm font-semibold text-sb-dark-purple">
+                    Firma
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={gestorBarrial}
+                      onChange={(e) => setGestorBarrial(e.target.value)}
+                      placeholder="Nombre gestor barrial"
+                      required
+                    />
+                  </td>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={accion}
+                      onChange={(e) => setAccion(e.target.value)}
+                      placeholder="Acción o compromiso asociado"
+                      required
+                    />
+                  </td>
+                  <td className="align-top border border-outline-variant p-3 bg-surface-container-lowest">
+                    <ImagePickerButton
+                      inputRef={firmaGestorInputRef}
+                      inputId="firma-gestor"
+                      onPick={(files) => {
+                        const [image] = createPreviewImages(files)
+                        setFirma(image ?? null)
+                      }}
+                    />
+                    {firma ? (
+                      <img
+                        src={firma.url}
+                        alt="Vista previa firma gestor barrial"
+                        className="mt-2 h-28 w-full rounded-lg border border-outline-variant object-contain bg-surface p-2 shadow-sm"
+                      />
+                    ) : (
+                      <p className="mt-2 text-xs text-on-surface-variant font-medium">
+                        La vista previa aparece al elegir la imagen.
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className={tableShell}>
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="bg-surface-container-low">
+                  <th className="border border-outline-variant px-3 py-2 text-left text-sm font-semibold text-sb-dark-purple">
+                    Contraparte SPD
+                  </th>
+                  <th className="border border-outline-variant px-3 py-2 text-left text-sm font-semibold text-sb-dark-purple">
+                    Acción
+                  </th>
+                  <th className="border border-outline-variant px-3 py-2 text-left text-sm font-semibold text-sb-dark-purple">
+                    Firma
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={contraparteSpd}
+                      onChange={(e) => setContraparteSpd(e.target.value)}
+                      placeholder="Nombre contraparte SPD"
+                      required
+                    />
+                  </td>
+                  <td className={cellInput}>
+                    <input
+                      className={inputClass}
+                      value={accionContraparte}
+                      onChange={(e) => setAccionContraparte(e.target.value)}
+                      placeholder="Acción o compromiso asociado"
+                      required
+                    />
+                  </td>
+                  <td className="align-top border border-outline-variant p-3 bg-surface-container-lowest">
+                    <ImagePickerButton
+                      inputRef={firmaContraparteInputRef}
+                      inputId="firma-contraparte-spd"
+                      onPick={(files) => {
+                        const [image] = createPreviewImages(files)
+                        setFirmaContraparte(image ?? null)
+                      }}
+                    />
+                    {firmaContraparte ? (
+                      <img
+                        src={firmaContraparte.url}
+                        alt="Vista previa firma contraparte SPD"
+                        className="mt-2 h-28 w-full rounded-lg border border-outline-variant object-contain bg-surface p-2 shadow-sm"
+                      />
+                    ) : (
+                      <p className="mt-2 text-xs text-on-surface-variant font-medium">
+                        La vista previa aparece al elegir la imagen.
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className={tableShell}>
+            <table className="w-full border-collapse text-left">
+              <tbody>
+                <tr>
+                  <td className={cellLabel}>Medios verificadores</td>
+                  <td className="align-top border border-outline-variant p-4 bg-surface-container-lowest">
+                    <ImagePickerButton
+                      inputRef={mediosInputRef}
+                      inputId="medios-verificadores"
+                      multiple
+                      onPick={(files) => {
+                        const next = createPreviewImages(files)
+                        if (next.length) setMediosVerificadores((prev) => [...prev, ...next])
+                      }}
+                    />
+                    <p className="mt-2 text-xs text-on-surface-variant font-medium">
+                      Agregue todas las imágenes que considere necesarias
                     </p>
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                    {mediosVerificadores.length > 0 ? (
+                      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                        {mediosVerificadores.map((image) => (
+                          <div key={image.url} className="relative group rounded-lg overflow-hidden border border-outline-variant shadow-sm">
+                            <img
+                              src={image.url}
+                              alt={image.name}
+                              className="h-28 w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-1 top-1 rounded bg-black/70 px-2 py-1 text-[10px] font-medium text-white hover:bg-sb-red transition-colors"
+                              onClick={() => removeMedioAt(image.url)}
+                            >
+                              Quitar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <div className={tableShell}>
-          <table className="w-full border-collapse text-left">
-            <tbody>
-              <tr>
-                <td className={cellLabel}>Medios verificadores</td>
-                <td className="align-top border border-[var(--color-border)] p-3">
-                  <ImagePickerButton
-                    inputRef={mediosInputRef}
-                    inputId="medios-verificadores"
-                    multiple
-                    onPick={(files) => {
-                      const next = createPreviewImages(files)
-                      if (next.length) setMediosVerificadores((prev) => [...prev, ...next])
-                    }}
-                  />
-                  <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
-                    Agregue todas las imagenes que considere necesarias
-                  </p>
-                  {mediosVerificadores.length > 0 ? (
-                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                      {mediosVerificadores.map((image) => (
-                        <div key={image.url} className="relative">
-                          <img
-                            src={image.url}
-                            alt={image.name}
-                            className="h-28 w-full rounded border border-[var(--color-border)] object-cover"
-                          />
-                          <button
-                            type="button"
-                            className="absolute right-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white hover:bg-black"
-                            onClick={() => removeMedioAt(image.url)}
-                          >
-                            Quitar
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          <div className={tableShell}>
+            <table className="w-full border-collapse text-left">
+              <tbody>
+                <tr>
+                  <td className={cellLabel}>Registro fotográfico</td>
+                  <td className="align-top border border-outline-variant p-4 bg-surface-container-lowest">
+                    <ImagePickerButton
+                      inputRef={registroInputRef}
+                      inputId="registro-fotografico"
+                      multiple
+                      onPick={(files) => {
+                        const next = createPreviewImages(files)
+                        if (next.length) setRegistroFotografico((prev) => [...prev, ...next])
+                      }}
+                    />
+                    <p className="mt-2 text-xs text-on-surface-variant font-medium">
+                      Agregue todas las imágenes que considere necesarias
+                    </p>
+                    {registroFotografico.length > 0 ? (
+                      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                        {registroFotografico.map((image) => (
+                          <div key={image.url} className="relative group rounded-lg overflow-hidden border border-outline-variant shadow-sm">
+                            <img
+                              src={image.url}
+                              alt={image.name}
+                              className="h-28 w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-1 top-1 rounded bg-black/70 px-2 py-1 text-[10px] font-medium text-white hover:bg-sb-red transition-colors"
+                              onClick={() => removeRegistroAt(image.url)}
+                            >
+                              Quitar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <div className={tableShell}>
-          <table className="w-full border-collapse text-left">
-            <tbody>
-              <tr>
-                <td className={cellLabel}>Registro fotográfico</td>
-                <td className="align-top border border-[var(--color-border)] p-3">
-                  <ImagePickerButton
-                    inputRef={registroInputRef}
-                    inputId="registro-fotografico"
-                    multiple
-                    onPick={(files) => {
-                      const next = createPreviewImages(files)
-                      if (next.length) setRegistroFotografico((prev) => [...prev, ...next])
-                    }}
-                  />
-                  <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
-                    Agregue todas las imagenes que considere necesarias
-                  </p>
-                  {registroFotografico.length > 0 ? (
-                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                      {registroFotografico.map((image) => (
-                        <div key={image.url} className="relative">
-                          <img
-                            src={image.url}
-                            alt={image.name}
-                            className="h-28 w-full rounded border border-[var(--color-border)] object-cover"
-                          />
-                          <button
-                            type="button"
-                            className="absolute right-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white hover:bg-black"
-                            onClick={() => removeRegistroAt(image.url)}
-                          >
-                            Quitar
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          {submitError ? (
+            <p className="text-sm font-semibold text-sb-red" role="alert">
+              {submitError}
+            </p>
+          ) : null}
+          {submitOk ? (
+            <p className="text-sm font-semibold text-emerald-600" role="status">
+              {submitOk}
+            </p>
+          ) : null}
 
-        {submitError ? (
-          <p className="text-sm text-[var(--color-destructive)]" role="alert">
-            {submitError}
-          </p>
-        ) : null}
-        {submitOk ? (
-          <p className="text-sm text-emerald-600" role="status">
-            {submitOk}
-          </p>
-        ) : null}
+          <WorkerFormDraftControls
+            pendingLabel={draft.pendingLabel}
+            notice={draft.notice}
+            onSaveDraft={draft.saveDraft}
+            onRestoreDraft={draft.restoreDraft}
+            onDiscardDraft={draft.discardDraft}
+            submitDisabled={submitMutation.isPending}
+          >
+            <Button 
+              type="submit" 
+              disabled={submitMutation.isPending}
+              style={{ backgroundColor: SB_COLORS.PURPLE }}
+              className="text-white hover:opacity-90 font-bold shadow-sm"
+            >
+              {submitMutation.isPending ? 'Enviando…' : 'Enviar a revisión'}
+            </Button>
+          </WorkerFormDraftControls>
+        </form>
 
-        <WorkerFormDraftControls
-          pendingLabel={draft.pendingLabel}
-          notice={draft.notice}
-          onSaveDraft={draft.saveDraft}
-          onRestoreDraft={draft.restoreDraft}
-          onDiscardDraft={draft.discardDraft}
-          submitDisabled={submitMutation.isPending}
-        >
-          <Button type="submit" disabled={submitMutation.isPending}>
-            {submitMutation.isPending ? 'Enviando…' : 'Enviar a revisión'}
-          </Button>
-        </WorkerFormDraftControls>
-      </form>
-
-      <section className="space-y-3">
-        <h3 className="text-lg font-semibold">Actas registradas</h3>
-        {minutesQuery.isLoading ? (
-          <p className="text-sm text-[var(--color-muted-foreground)]">Cargando actas…</p>
-        ) : (minutesQuery.data?.length ?? 0) === 0 ? (
-          <p className="rounded-lg border border-dashed border-[var(--color-border)] p-4 text-sm text-[var(--color-muted-foreground)]">
-            Aún no hay actas creadas.
-          </p>
-        ) : (
-          <WorkerMinutesHistoryList minutes={minutesQuery.data ?? []} />
-        )}
-      </section>
-    </section>
+        <section className="space-y-3 pt-4">
+          <h3 className="text-xl font-bold text-sb-dark-purple">Actas registradas</h3>
+          {minutesQuery.isLoading ? (
+            <p className="text-sm text-on-surface-variant">Cargando actas…</p>
+          ) : (minutesQuery.data?.length ?? 0) === 0 ? (
+            <p className="rounded-xl border border-dashed border-outline-variant p-6 text-sm text-on-surface-variant bg-surface-container-lowest">
+              Aún no hay actas creadas.
+            </p>
+          ) : (
+            <WorkerMinutesHistoryList minutes={minutesQuery.data ?? []} />
+          )}
+        </section>
+      </div>
+    </div>
   )
 }
