@@ -18,7 +18,7 @@ const STATUS_LABELS: Record<string, string> = {
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
     PLANIFICADA: 'bg-secondary-container text-on-secondary-container',
-    EN_CURSO: 'bg-primary text-on-primary',
+    EN_CURSO: 'bg-blue-100 text-blue-700 border border-blue-200',
     FINALIZADA: 'bg-green-100 text-green-700',
     CANCELADA: 'bg-error-container text-on-error-container',
   }
