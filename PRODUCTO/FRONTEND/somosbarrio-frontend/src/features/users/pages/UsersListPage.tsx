@@ -1,20 +1,30 @@
 import { useState } from 'react';
 import axios from 'axios'; 
-import { useUsers, useDeleteUser, useCreateUser } from '../hooks/useUsers';
+import { useUsers, useDeleteUser, useCreateUser, useUpdateUser } from '../hooks/useUsers';
+import type { User } from '../api/users.api';
 import { SB_COLORS } from '@/shared/constants/colors';
+import { RoleCheckboxes } from '@/shared/components/RoleCheckboxes';
 import type { ApiErrorBody } from '@/shared/types/api'; 
 
 export function UsersListPage() {
     const { data: users, isLoading, error } = useUsers();
     const deleteUserMutation = useDeleteUser();
     const createUserMutation = useCreateUser();
+    const updateUserMutation = useUpdateUser();
+
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [editFirstName, setEditFirstName] = useState('');
+    const [editLastName, setEditLastName] = useState('');
+    const [editRoles, setEditRoles] = useState<string[]>(['COLABORADOR']);
+    const [editActive, setEditActive] = useState(true);
+    const [editError, setEditError] = useState<string | null>(null);
 
     const [searchTerm, setSearchTerm] = useState('');
 
     const [showForm, setShowForm] = useState(false);
     const [email, setEmail] = useState('');
     const [fullName, setFullName] = useState('');
-    const [role, setRole] = useState('COLABORADOR');
+    const [createRoles, setCreateRoles] = useState<string[]>(['COLABORADOR']);
     const [formError, setFormError] = useState<string | null>(null);
 
     const filteredUsers = users?.filter(user => {
@@ -48,12 +58,12 @@ export function UsersListPage() {
                 password: 'Temporal123!', 
                 firstName: firstName,
                 lastName: lastName,
-                roles: [role]
+                roles: createRoles,
             });
             
             setEmail('');
             setFullName('');
-            setRole('COLABORADOR');
+            setCreateRoles(['COLABORADOR']);
             setShowForm(false);
         } catch (err) {
             console.error('Error al crear usuario:', err);
@@ -63,6 +73,44 @@ export function UsersListPage() {
                 setFormError(data?.message ?? 'El servidor rechazó el registro. Verifique el formato.');
             } else {
                 setFormError(err instanceof Error ? err.message : 'No se pudo registrar el usuario en el sistema.');
+            }
+        }
+    };
+
+    const openEdit = (user: User) => {
+        setEditingUser(user);
+        setEditFirstName(user.firstName ?? '');
+        setEditLastName(user.lastName ?? '');
+        setEditRoles(
+            user.roles.length
+                ? user.roles.map((r) => (r.startsWith('ROLE_') ? r.replace('ROLE_', '') : r))
+                : ['COLABORADOR'],
+        );
+        setEditActive(user.enabled);
+        setEditError(null);
+    };
+
+    const handleUpdateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUser) return;
+        setEditError(null);
+        try {
+            await updateUserMutation.mutateAsync({
+                id: editingUser.id,
+                data: {
+                    firstName: editFirstName.trim(),
+                    lastName: editLastName.trim(),
+                    roles: editRoles,
+                    isActive: editActive,
+                },
+            });
+            setEditingUser(null);
+        } catch (err) {
+            if (axios.isAxiosError(err) && err.response) {
+                const data = err.response.data as ApiErrorBody | undefined;
+                setEditError(data?.message ?? 'No se pudo actualizar el usuario.');
+            } else {
+                setEditError('No se pudo actualizar el usuario.');
             }
         }
     };
@@ -107,6 +155,43 @@ export function UsersListPage() {
                     </div>
                 </section>
 
+                {editingUser && (
+                    <form onSubmit={handleUpdateUser} className="mb-stack-lg bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl shadow-md">
+                        <h3 className="text-lg font-bold text-sb-dark-purple mb-stack-sm">Editar usuario</h3>
+                        <p className="text-xs text-on-surface-variant mb-stack-sm font-mono">{editingUser.email}</p>
+                        {editError && (
+                            <p className="mb-stack-sm p-stack-sm bg-error-container text-on-error-container rounded-lg text-xs" role="alert">
+                                {editError}
+                            </p>
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+                            <div>
+                                <label className="text-xs font-bold uppercase">Nombre</label>
+                                <input className="w-full p-2 border rounded-lg text-sm mt-1" value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} required />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold uppercase">Apellido</label>
+                                <input className="w-full p-2 border rounded-lg text-sm mt-1" value={editLastName} onChange={(e) => setEditLastName(e.target.value)} required />
+                            </div>
+                            <div className="md:col-span-2">
+                                <RoleCheckboxes value={editRoles} onChange={setEditRoles} />
+                            </div>
+                            <div className="flex items-end">
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" checked={editActive} onChange={(e) => setEditActive(e.target.checked)} />
+                                    Usuario activo
+                                </label>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 mt-stack-md">
+                            <button type="button" className="px-4 py-2 border rounded-lg text-sm" onClick={() => setEditingUser(null)}>Cancelar</button>
+                            <button type="submit" disabled={updateUserMutation.isPending} className="px-4 py-2 bg-black text-white rounded-lg text-sm font-semibold disabled:opacity-50">
+                                {updateUserMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
+                            </button>
+                        </div>
+                    </form>
+                )}
+
                 {showForm && (
                     <form onSubmit={handleCreateUser} className="mb-stack-lg bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl shadow-md">
                         <h3 className="text-lg font-bold text-sb-dark-purple mb-stack-sm">Registrar Nuevo Personal</h3>
@@ -139,16 +224,8 @@ export function UsersListPage() {
                                     className="p-2 border border-outline-variant rounded-lg text-sm bg-surface focus:outline-none focus:border-sb-purple"
                                 />
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs font-bold text-on-surface-variant uppercase">Rol Inicial</label>
-                                <select 
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="p-2 border border-outline-variant rounded-lg text-sm bg-surface focus:outline-none focus:border-sb-purple"
-                                >
-                                    <option value="COLABORADOR">COLABORADOR</option>
-                                    <option value="ADMINISTRADOR">ADMINISTRADOR</option>
-                                </select>
+                            <div className="md:col-span-3">
+                                <RoleCheckboxes value={createRoles} onChange={setCreateRoles} />
                             </div>
                         </div>
 
@@ -237,14 +314,25 @@ export function UsersListPage() {
                                                     </span>
                                                 </td>
                                                 <td className="p-stack-md text-center">
-                                                    <button
-                                                        onClick={() => handleDelete(user.id)}
-                                                        disabled={!user.enabled || deleteUserMutation.isPending}
-                                                        className={`p-1.5 rounded-lg inline-flex items-center justify-center transition-colors ${user.enabled && !deleteUserMutation.isPending ? 'text-sb-red hover:bg-error-container/30 cursor-pointer' : 'text-zinc-300 cursor-not-allowed'}`}
-                                                        title="Deshabilitar usuario"
-                                                    >
-                                                        <span className="material-symbols-outlined text-[20px]">person_remove</span>
-                                                    </button>
+                                                    <div className="flex justify-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openEdit(user)}
+                                                            className="p-1.5 rounded-lg text-sb-purple hover:bg-secondary-container/50 cursor-pointer"
+                                                            title="Editar usuario"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDelete(user.id)}
+                                                            disabled={!user.enabled || deleteUserMutation.isPending}
+                                                            className={`p-1.5 rounded-lg inline-flex items-center justify-center transition-colors ${user.enabled && !deleteUserMutation.isPending ? 'text-sb-red hover:bg-error-container/30 cursor-pointer' : 'text-zinc-300 cursor-not-allowed'}`}
+                                                            title="Deshabilitar usuario"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[20px]">person_remove</span>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))

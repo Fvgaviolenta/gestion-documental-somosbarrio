@@ -61,7 +61,6 @@ export const minuteStatusStyles: Record<MinuteStatus, string> = {
   BORRADOR: 'bg-slate-100 text-slate-700',
   EN_REVISION: 'bg-amber-100 text-amber-700',
   APROBADA: 'bg-emerald-100 text-emerald-700',
-  RECHAZADA: 'bg-red-100 text-red-700',
 }
 
 export { minuteDisplayTitle, parseMinuteContent }

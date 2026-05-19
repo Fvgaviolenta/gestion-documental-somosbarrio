@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 
 import { DocumentAttachmentsPanel } from '@/features/documents/components/DocumentAttachmentsPanel'
+import { DocumentMailPanel } from '@/features/mailing/components/DocumentMailPanel'
 import { DocumentFieldsDisplay } from '@/features/documents/components/DocumentFieldsDisplay'
 import { DocumentStatusBadge } from '@/features/documents/components/DocumentStatusBadge'
 import { TemplateFieldsForm } from '@/features/documents/components/TemplateFieldsForm'
@@ -189,6 +190,13 @@ export function DocumentDetailPage() {
         documentId={documentId}
         attachments={doc.attachments ?? []}
         canEdit={canEditAttachments}
+        onMessage={setMessage}
+        onError={setError}
+      />
+
+      <DocumentMailPanel
+        documentId={documentId}
+        documentStatus={doc.status}
         onMessage={setMessage}
         onError={setError}
       />

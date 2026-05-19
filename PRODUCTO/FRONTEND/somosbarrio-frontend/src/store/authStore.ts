@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import {
+  getMeRequest,
   loginRequest,
   logoutRequest,
   refreshRequest,
@@ -16,6 +17,8 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   refresh: () => Promise<string | null>
+  syncUser: () => Promise<void>
+  setUser: (user: UserDto | null) => void
   hasRole: (...roles: Role[]) => boolean
 }
 
@@ -51,6 +54,22 @@ export const useAuthStore = create<AuthState>()(
         }
         set({ user: null, accessToken: null, refreshToken: null })
         localStorage.clear()
+      },
+
+      setUser: (user) => set({ user }),
+
+      syncUser: async () => {
+        const token = get().accessToken
+        if (!token || token.startsWith('mock')) return
+        try {
+          const me = await getMeRequest()
+          const sanitizedRoles = me.roles.map((role: string) =>
+            role.startsWith('ROLE_') ? role.replace('ROLE_', '') : role,
+          ) as Role[]
+          set({ user: { ...me, roles: sanitizedRoles } })
+        } catch {
+          // Perfil no crítico para navegación
+        }
       },
 
       refresh: async () => {

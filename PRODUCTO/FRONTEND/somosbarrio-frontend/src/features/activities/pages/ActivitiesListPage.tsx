@@ -1,10 +1,12 @@
 ﻿import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-
+import { useMutation } from '@tanstack/react-query'
+import { deleteActivity } from '@/features/activities/api/activities.api'
 import { api } from '@/shared/lib/axios'
 import { formatDateOnly } from '@/shared/lib/formatters'
 import type { ActivityStatus } from '@/shared/types/enums'
 import { SB_COLORS } from '@/shared/constants/colors'
+import { useAuthStore } from '@/store/authStore'
 
 const STATUS_LABELS: Record<string, string> = {
   PLANIFICADA: 'Planificada',
@@ -39,10 +41,18 @@ interface BackendActivity {
 }
 
 export function ActivitiesListPage() {
+  const isAdmin = useAuthStore((s) => s.hasRole('ADMINISTRADOR'))
   const [status, setStatus] = useState<ActivityStatus | ''>('')
   const [activities, setActivities] = useState<BackendActivity[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteActivity,
+    onSuccess: () => setReloadKey((k) => k + 1),
+    onError: () => setError('No se pudo eliminar la actividad (puede tener actas vinculadas).'),
+  })
 
   useEffect(() => {
     let canceled = false
@@ -52,7 +62,7 @@ export function ActivitiesListPage() {
       setError(null)
 
       try {
-        const response = await api.get('/api/v1/activities', {
+        const response = await api.get('/activities', {
           params: {
             status: status || undefined,
           },
@@ -89,7 +99,7 @@ export function ActivitiesListPage() {
     return () => {
       canceled = true
     }
-  }, [status])
+  }, [status, reloadKey])
 
   const noData = !loading && !error && activities.length === 0
 
@@ -173,9 +183,21 @@ export function ActivitiesListPage() {
                           <span className="material-symbols-outlined text-xl">edit</span>
                         </button>
                       </Link>
-                      <button className="rounded-lg bg-surface-variant p-2 text-on-surface transition-colors hover:bg-surface-container-low">
-                        <span className="material-symbols-outlined text-xl">delete</span>
-                      </button>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          className="rounded-lg bg-surface-variant p-2 text-sb-red transition-colors hover:bg-error-container/30 disabled:opacity-40"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => {
+                            if (window.confirm('¿Eliminar esta actividad? No se puede deshacer si hay actas vinculadas.')) {
+                              deleteMutation.mutate(String(activity.id))
+                            }
+                          }}
+                          title="Eliminar actividad"
+                        >
+                          <span className="material-symbols-outlined text-xl">delete</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

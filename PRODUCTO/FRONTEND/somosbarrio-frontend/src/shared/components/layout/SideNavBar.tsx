@@ -7,7 +7,18 @@ export default function SideNavBar() {
     const location = useLocation();
     const navigate = useNavigate();
     const logout = useAuthStore((s) => s.logout);
+    const user = useAuthStore((s) => s.user);
+    const hasRole = useAuthStore((s) => s.hasRole);
+    const isAdmin = hasRole('ADMINISTRADOR');
     const isActive = (path: string) => location.pathname === path;
+    const isActivePrefix = (path: string) => location.pathname.startsWith(path);
+
+    const displayName =
+        user?.firstName || user?.lastName
+            ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
+            : user?.email ?? 'Usuario';
+
+    const primaryRole = user?.roles[0] ?? 'Usuario';
 
     const handleLogout = async () => {
         await logout();
@@ -30,33 +41,73 @@ export default function SideNavBar() {
             </Link>
            
             <nav className="flex-1 space-y-1">
+                {/* 1. Panel de Control */}
                 <Link to="/" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined">dashboard</span>
                     <span className="text-sm font-semibold">Panel de Control</span>
                 </Link>
                 
-                <Link to="/activities" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${location.pathname.startsWith('/activities') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                {/* 2. Actividades */}
+                <Link to="/activities" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActivePrefix('/activities') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined">folder_open</span>
                     <span className="text-sm font-semibold">Actividades</span>
                 </Link>
 
-                <Link to="/documents" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${location.pathname.startsWith('/documents') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                {/* 3. Documentos */}
+                <Link to="/documents" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActivePrefix('/documents') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined">description</span>
                     <span className="text-sm font-semibold">Documentos</span>
                 </Link>
+
+                {/* 4. Actas */}
+                <Link to="/minutes" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActivePrefix('/minutes') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                    <span className="material-symbols-outlined">assignment</span>
+                    <span className="text-sm font-semibold">Actas</span>
+                </Link>
+
+                {/* 5. Plantillas (Solo Admin) */}
+                {isAdmin && (
+                    <Link to="/document-templates" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/document-templates') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                        <span className="material-symbols-outlined">article</span>
+                        <span className="text-sm font-semibold">Plantillas</span>
+                    </Link>
+                )}
+
+                {/* 6. Destinatarios (Solo Admin) */}
+                {isAdmin && (
+                    <Link to="/recipient-groups" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/recipient-groups') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                        <span className="material-symbols-outlined">mail</span>
+                        <span className="text-sm font-semibold">Destinatarios</span>
+                    </Link>
+                )}
+
+                {/* 7. Repositorio */}
+                <Link to="/repository" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/repository') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                    <span className="material-symbols-outlined">search</span>
+                    <span className="text-sm font-semibold">Repositorio</span>
+                </Link>
+
+                {/* 8. Auditoría (Solo Admin) */}
+                {isAdmin && (
+                    <Link to="/audit-logs" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/audit-logs') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                        <span className="material-symbols-outlined">history</span>
+                        <span className="text-sm font-semibold">Auditoría</span>
+                    </Link>
+                )}
                 
+                {/* 9. Reportes */}
                 <Link to="/reports" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/reports') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                     <span className="material-symbols-outlined">bar_chart</span>
                     <span className="text-sm font-semibold">Reportes</span>
                 </Link>
 
-                <Link 
-                    to="/users" 
-                    className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${location.pathname.startsWith('/users') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
-                    <span className="material-symbols-outlined">manage_accounts</span>
-                    <span className="text-sm font-semibold">Gestión Usuarios</span>
-                </Link>
-
+                {/* 10. Gestión Usuarios (Solo Admin) */}
+                {isAdmin && (
+                    <Link to="/users" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActivePrefix('/users') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                        <span className="material-symbols-outlined">manage_accounts</span>
+                        <span className="text-sm font-semibold">Gestión Usuarios</span>
+                    </Link>
+                )}
             </nav>
             
             <div className="mt-auto pt-stack-md border-t border-outline-variant space-y-1">
@@ -68,13 +119,18 @@ export default function SideNavBar() {
                     <span className="material-symbols-outlined">logout</span>
                     <span className="text-sm font-semibold">Cerrar sesión</span>
                 </button>
-                <div className="flex items-center gap-3 px-3 py-4 mt-2">
-                    <img alt="Perfil" className="w-8 h-8 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/a/default-user=s64-c" />
-                    <div>
-                        <p className="text-sm font-semibold text-on-surface leading-none">Usuario Demo</p>
-                        <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">Administrador</p>
+                <Link
+                    to="/account"
+                    className="flex items-center gap-3 px-3 py-4 mt-2 rounded-lg hover:bg-surface-container-high transition-colors"
+                >
+                    <div className="w-8 h-8 rounded-full border border-outline-variant bg-sb-dark-purple/10 flex items-center justify-center text-sb-dark-purple font-bold text-sm">
+                        {displayName.charAt(0).toUpperCase()}
                     </div>
-                </div>
+                    <div>
+                        <p className="text-sm font-semibold text-on-surface leading-none">{displayName}</p>
+                        <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">{primaryRole}</p>
+                    </div>
+                </Link>
             </div>
         </aside>
     );
