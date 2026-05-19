@@ -13,6 +13,7 @@ import { AccountPage } from '@/features/auth/pages/AccountPage'
 import { AuditLogsPage } from '@/features/audit/pages/AuditLogsPage'
 import { DocumentTemplatesPage } from '@/features/document-templates/pages/DocumentTemplatesPage'
 import { RecipientGroupsPage } from '@/features/mailing/pages/RecipientGroupsPage'
+import { RepositoryPage } from '@/features/repository/pages/RepositoryPage'
 import { AdminReportsPage } from '@/features/reports/pages/AdminReportsPage'
 import { WorkerReportsPage } from '@/features/reports/pages/WorkerReportsPage'
 import { WorkerConfigPage } from '@/features/worker-menu/pages/WorkerConfigPage'
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
       { path: 'mis-reportes', element: <WorkerReportsPage /> },
       { path: 'mis-actas', element: <WorkerMinutesPage /> },
 
+      { path: 'repository', element: <RepositoryPage /> },
       {
         element: <AdminRoute />,
         children: [

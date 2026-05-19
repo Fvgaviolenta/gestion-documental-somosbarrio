@@ -30,9 +30,12 @@ Backend de la **Plataforma de Gestión Documental Somos Barrio** para la Subsecr
 
 ```powershell
 cd somosbarrio-backend
-Copy-Item backend/.env.example .env -ErrorAction SilentlyContinue
+Copy-Item .env.example .env -ErrorAction SilentlyContinue
 docker compose up -d --build
 ```
+
+Variables de Compose: archivo **`.env` en la raíz** de este repo (`DB_PASSWORD`, `JWT_SECRET`).  
+Para `./mvnw spring-boot:run` sin Docker Java, usar `backend/.env` (ver `backend/.env.example`).
 
 Servicios:
 - Backend Spring Boot: **`http://localhost:8081`** (Compose mapea el puerto host **8081** → `8380` en el contenedor)

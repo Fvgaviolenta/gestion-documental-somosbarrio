@@ -1,10 +1,10 @@
 # Integración Frontend ↔ Backend Somos Barrio
 
-Contraste entre el cliente SPA ([`somosbarrio-frontend`](somosbarrio-frontend)) y la API REST de Spring Boot ([`somosbarrio-backend`](../BACKEND/somosbarrio-backend)), actualizado tras el merge de **PR #12** (brechas del análisis API) — mayo 2026.
+Contraste entre el cliente SPA ([`somosbarrio-frontend`](somosbarrio-frontend)) y la API REST de Spring Boot ([`somosbarrio-backend`](../BACKEND/somosbarrio-backend)), actualizado a **mayo 2026** (post PR #12 y correcciones de auth/actividades).
 
 Complementa el análisis del cliente en [`ANALISIS_FRONTEND.md`](ANALISIS_FRONTEND.md).
 
-**Contexto:** el **backend está completo** (~55 endpoints REST, Flyway V1–V17, módulos auth, actividades, documentos, actas, plantillas, mailing, reportes Excel, auditoría y repositorio). El **frontend integra la mayoría del catálogo API** tras la ronda de brechas: repositorio, mailing, auditoría, plantillas admin, actas admin, reportes Excel de actividades, cuenta (`/auth/me`, change-password) y edición de usuarios (`PUT`).
+**Contexto:** el **backend está completo** (~55 endpoints REST, Flyway V1–V17, módulos M0–M8 operativos). El **frontend consume casi todo el catálogo API** con pantallas admin y flujos colaborador; la integración estimada ronda **~90–92 %**.
 
 **Referencias servidor:**
 
@@ -15,29 +15,26 @@ Complementa el análisis del cliente en [`ANALISIS_FRONTEND.md`](ANALISIS_FRONTE
 
 ```mermaid
 flowchart LR
-  subgraph frontend [Frontend React :5173]
-    Admin[Portal admin ProtectedRoute]
-    Worker[Portal trabajador WorkerRoute]
+  subgraph frontend [Frontend :5173]
+    Shell[AppLayout ProtectedRoute]
+    Worker[/trabajador WorkerRoute]
   end
-  subgraph integrated [Integrado en SPA]
-    I1[auth login refresh logout me change-password]
-    I2[documentos workflow adjuntos PDF mail]
-    I3[usuarios CRUD PUT incluido]
-    I4[actividades list edit delete]
-    I5[reportes Excel docs y actividades]
+  subgraph integrated [Integrado]
+    I1[auth 5 endpoints]
+    I2[documentos mail workflow]
+    I3[usuarios CRUD PUT]
+    I4[actividades CRUD delete]
+    I5[plantillas repo API audit reports]
     I6[actas admin y colaborador]
-    I7[repositorio plantillas mailing audit]
   end
-  subgraph gap [Brechas residuales]
-    G1[CreateActivityPage POST duplicado]
+  subgraph gap [Brechas menores]
+    G1["/repository sin ruta en router"]
     G2[PATCH activity status sin UI]
-    G3[TOKEN_EXPIRED en interceptor]
-    G4[AuthBootstrap vacio]
-    G5[upload docx plantillas]
-    G6[notas worker localStorage]
+    G3[env.example puerto 8080]
   end
-  frontend --> integrated
-  gap -.->|"deuda menor"| frontend
+  Shell --> integrated
+  Worker --> integrated
+  gap -.-> frontend
 ```
 
 ---
@@ -46,236 +43,181 @@ flowchart LR
 
 | Dimensión | Backend | Frontend |
 |-----------|---------|----------|
-| Endpoints REST | ~55 en 13 controladores | ~52 rutas consumidas vía **12** archivos `*.api.ts` |
-| Módulos en servidor | Auth, actividades, documentos, actas, plantillas, mailing, reportes, auditoría, repositorio | Todos con cliente HTTP; casi todos con pantalla |
-| Cobertura estimada | — | **~85–90 %** del catálogo API; flujos de negocio visibles **~90 %** |
+| Endpoints REST | ~55 en 13 controladores | ~52 consumidos vía **12** archivos `*.api.ts` |
+| Módulos | Auth, actividades, documentos, actas, plantillas, mailing, reportes, auditoría, repositorio | Cliente HTTP en todos; UI en casi todos |
+| Cobertura estimada | — | **~90–92 %** catálogo API; flujos visibles **~92 %** |
 
-**Bloqueadores / deuda técnica residual:**
+### Corregido recientemente en el cliente
 
-1. **`CreateActivityPage`**: `POST /api/v1/activities` con `baseURL` ya en `/api/v1` → URL efectiva **`/api/v1/api/v1/activities`** (404).
-2. **Interceptor Axios**: no trata código **`TOKEN_EXPIRED`** (backend lo devuelve en access JWT caducado); solo reacciona a `AUTH_TOKEN_EXPIRED` (inexistente en backend) o `TOKEN_INVALID`.
-3. **`AuthBootstrap`**: montado pero lógica comentada — sin rehidratación/refresh proactivo al F5.
-4. **`.env.example`**: cita proxy **`8080`**; Compose usa **8081** (`vite.config.ts` fallback sí es **8081**).
+| Tema | Estado actual |
+|------|----------------|
+| `POST` alta actividad | [`CreateActivityPage`](somosbarrio-frontend/src/features/activities/pages/CreateActivityPage.tsx) usa `POST /activities` (sin doble `/api/v1`) |
+| JWT expirado | Interceptor en [`axios.ts`](somosbarrio-frontend/src/shared/lib/axios.ts) reacciona a `TOKEN_EXPIRED`, `TOKEN_INVALID` y `AUTH_TOKEN_EXPIRED` |
+| Sesión tras F5 | [`AuthBootstrap`](somosbarrio-frontend/src/app/AuthBootstrap.tsx) rehidrata Zustand y llama `refresh()` si hay refresh sin access |
+| Guards | `ProtectedRoute` + `AdminRoute` + `WorkerRoute` activos |
+| Perfil navegación | `SideNavBar` con `authStore.user`; `GET /auth/me` vía `syncUser` |
 
-**Resuelto desde la versión anterior de este documento:**
+### Deuda técnica residual
 
-- `ProtectedRoute` **activo** (redirige a `/login` sin sesión).
-- `AdminRoute` protege rutas solo **`ADMINISTRADOR`** (`/users`, `/reports`, plantillas, destinatarios, auditoría).
-- Repositorio, mailing, auditoría, plantillas CRUD, actas admin, Excel actividades, `GET /auth/me`, `POST /auth/change-password`, `PUT /users/{id}`.
-- `SideNavBar` muestra nombre/rol desde **`authStore.user`**; `useSyncCurrentUser` en layouts admin y trabajador.
-
----
-
-## 2. Qué cumple hoy el frontend frente al backend
-
-Capacidades del backend para las que el SPA dispone de **cliente HTTP y pantalla** (o flujo embebido). Se marcan integraciones **parciales** cuando la UI existe pero hay fallo o hueco menor.
-
-### 2.1 Autenticación y sesión
-
-| Endpoint | Cliente | UI |
-|----------|---------|-----|
-| `POST /auth/login` | [`auth.api.ts`](somosbarrio-frontend/src/features/auth/api/auth.api.ts) | `/login`, `/trabajador/login` |
-| `POST /auth/refresh` | interceptor + `authStore.refresh()` | Automático en 401 (limitado; ver §5) |
-| `POST /auth/logout` | `auth.api.ts` | SideNavBar, layouts |
-| `GET /auth/me` | `getMeRequest` + `authStore.syncUser()` | `/account`; sync en `AppLayout` / `WorkerLayout` |
-| `POST /auth/change-password` | `changePasswordRequest` | [`AccountPage`](somosbarrio-frontend/src/features/auth/pages/AccountPage.tsx) |
-
-### 2.2 Actividades
-
-| Endpoint | Cliente | UI |
-|----------|---------|-----|
-| `GET /activities` | `activities.api.ts`; listado legacy en [`ActivitiesListPage`](somosbarrio-frontend/src/features/activities/pages/ActivitiesListPage.tsx) | `/activities`, home |
-| `GET /activities/{id}`, `PUT` | hooks React Query | `/activities/:id/edit` |
-| `POST /activities` | `createActivity` en API (**no usado** en alta) | **`CreateActivityPage` roto** → POST duplicado |
-| `PATCH /activities/{id}/status` | `changeActivityStatus` + `useChangeActivityStatus` | **Sin UI** (hook sin consumidor) |
-| `DELETE /activities/{id}` | `deleteActivity` | Botón eliminar en listado (solo admin) |
-
-### 2.3 Gestión documental
-
-- **Documentos** (`/documents`): CRUD, workflow (`submit-review`, `approve`, `reject`, `reopen`), adjuntos multipart, PDF, preview DOCX — [`documents.api.ts`](somosbarrio-frontend/src/features/documents/api/documents.api.ts); `/documents`, `/documents/new`, `/documents/:id`.
-- **Mailing en detalle**: `POST .../send`, `GET .../email-logs` — [`document-mail.api.ts`](somosbarrio-frontend/src/features/mailing/api/document-mail.api.ts) + [`DocumentMailPanel`](somosbarrio-frontend/src/features/mailing/components/DocumentMailPanel.tsx) en documento **APROBADO**.
-- **Flujos colaborador** (misma API documentos):
-  - Informe rápido — `/trabajador/reportes` → plantilla `VITE_TEMPLATE_REPORTE_CODE` (`INFORME_TIPO`).
-  - Bitácora — `/trabajador/bitacora` → `VITE_TEMPLATE_BITACORA_CODE`.
-
-### 2.4 Plantillas
-
-| Endpoint | Cliente | UI |
-|----------|---------|-----|
-| `GET /document-templates` | `document-templates.api.ts` | Crear documento, worker, admin |
-| `GET /document-templates/{id}` | `getDocumentTemplateById` | Admin CRUD |
-| `POST`, `PUT`, `DELETE` | create/update/delete | [`DocumentTemplatesPage`](somosbarrio-frontend/src/features/document-templates/pages/DocumentTemplatesPage.tsx) (`AdminRoute`) |
-
-> El `.docx` matriz **no se sube por API** (solo `templateFilePath` en JSON apuntando a `TEMPLATE_ROOT` en servidor).
-
-### 2.5 Repositorio documental
-
-- **`GET /repository/documents`**: [`repository.api.ts`](somosbarrio-frontend/src/features/repository/api/repository.api.ts) + [`RepositoryPage`](somosbarrio-frontend/src/features/repository/pages/RepositoryPage.tsx) (`/repository`).
-
-### 2.6 Administración de usuarios
-
-- **`GET /users`**, **`POST /users`**, **`PUT /users/{id}`**, **`DELETE /users/{id}`**: [`users.api.ts`](somosbarrio-frontend/src/features/users/api/users.api.ts) + [`UsersListPage`](somosbarrio-frontend/src/features/users/pages/UsersListPage.tsx) (`AdminRoute`).
-- Mapeo API `isActive` → modelo UI `enabled` en `mapUser`.
-
-### 2.7 Mailing — grupos destinatarios
-
-- **`GET /recipient-groups`**, **`POST`**, **`PUT /{id}`**, **`PATCH /{id}/deactivate`**: [`recipient-groups.api.ts`](somosbarrio-frontend/src/features/mailing/api/recipient-groups.api.ts) + [`RecipientGroupsPage`](somosbarrio-frontend/src/features/mailing/pages/RecipientGroupsPage.tsx).
-
-### 2.8 Actas (`minutes`)
-
-| Ámbito | Endpoints | UI |
-|--------|-----------|-----|
-| Admin | `GET /minutes`, `GET /{id}`, `PUT`, `DELETE`, `PATCH .../status`, adjuntos upload/download/delete | `/minutes`, `/minutes/:id` |
-| Colaborador | `POST`, adjuntos, auto `EN_REVISION` | `/trabajador/actas` |
-
-> Backend: actas **sin** estado `RECHAZADA` (solo `BORRADOR`, `EN_REVISION`, `APROBADA`). Admin **no tiene pantalla de alta** de acta (solo listado/detalle; creación vía portal trabajador).
-
-### 2.9 Reportes exportables
-
-| Endpoint | UI |
-|----------|-----|
-| `GET /reports/documents` | Diálogo export + [`AdminReportsPage`](somosbarrio-frontend/src/features/reports/pages/AdminReportsPage.tsx) |
-| `GET /reports/activities` | `AdminReportsPage` (`downloadActivitiesExcelReport`) |
-
-### 2.10 Auditoría
-
-- **`GET /audit-logs`**: [`audit.api.ts`](somosbarrio-frontend/src/features/audit/api/audit.api.ts) + [`AuditLogsPage`](somosbarrio-frontend/src/features/audit/pages/AuditLogsPage.tsx) (`AdminRoute`).
+1. ~~Repositorio sin ruta~~ — corregido: `/repository` registrado en [`router.tsx`](somosbarrio-frontend/src/app/router.tsx).
+2. **`PATCH /activities/{id}/status`:** API + hook `useChangeActivityStatus` sin pantalla que lo use.
+3. **`.env.example`:** `VITE_BACKEND_PROXY_TARGET=http://localhost:8080` vs Compose **8081** (fallback Vite sí usa **8081**).
+4. **`logout`:** `localStorage.clear()` borra notas/borradores del trabajador.
 
 ---
 
-## 3. Qué cumple el backend que el frontend aún no cubre por completo
+## 2. Arquitectura de portales (nuevo modelo UX)
 
-Brechas **residuales** (el grueso del §3 anterior quedó integrado en PR #12).
+El SPA ofrece **dos shells** que comparten la misma API:
 
-### 3.1 Endpoints sin UI o sin uso efectivo
+| Shell | Entrada login | Rutas | Rol típico |
+|-------|---------------|-------|------------|
+| **Portal institucional** | `/login` → `/` | `AppLayout` + `ProtectedRoute`: documentos, actividades, actas admin, `/mis-reportes`, `/mis-actas` (colaborador en shell moderno) | `ADMINISTRADOR` y también `COLABORADOR` si entra por `/login` |
+| **Portal trabajador clásico** | `/trabajador/login` → `/trabajador` | `WorkerLayout` + `WorkerRoute`: bitácora, actas, notas locales | Solo `COLABORADOR` |
 
-| Endpoint | Motivo |
-|----------|--------|
-| `PATCH /activities/{id}/status` | Cliente y hook existen; **ninguna pantalla** cambia estado de actividad |
-| `GET /documents/{id}/attachments` (listado aislado) | El detalle usa `doc.attachments` del `GET /documents/{id}` |
-| `GET /minutes/{id}/attachments` (listado aislado) | `listMinuteAttachments` exportado pero **sin import** en componentes; detalle usa DTO |
-| `POST /minutes` (admin) | Sin ruta `/minutes/new` en portal institucional |
+`AdminRoute` restringe: `/reports`, `/document-templates`, `/recipient-groups`, `/audit-logs`, `/users`.
 
-### 3.2 Comportamiento solo servidor (sin expectativa de UI)
-
-- Migraciones Flyway **V1–V17**, merge Word (POI), PDF LibreOffice, `UPLOAD_ROOT` / `TEMPLATE_ROOT`, Actuator, correlativos, auditoría persistida en servicios.
-- Upload multipart de matrices `.docx` — **fuera de diseño** actual del API (decisión producto).
-
-### 3.3 Portal trabajador sin backend
-
-- **`/trabajador/notas`**: solo `localStorage`.
-- **`/trabajador/configuracion`**, **`/trabajador/ayuda`**: sin API de preferencias/contenido remoto.
+Ruta comodín `*` → **`/login`** (no `/`).
 
 ---
 
-## 4. Qué muestra el frontend pero no integra bien con el backend
+## 3. Qué cumple hoy el frontend frente al backend
 
-### 4.1 Sesión y arranque
+### 3.1 Autenticación (5/5 endpoints)
 
-- **`AuthBootstrap` vacío**: tras F5, `accessToken` no está en memoria (no se persiste); el usuario autenticado depende de que el interceptor dispare refresh en el primer 401 o de volver a login.
-- **Refresh silencioso incompleto**: access expirado → backend **`TOKEN_EXPIRED`** → interceptor **no** renueva; puede cerrar sesión antes de intentar refresh.
+| Endpoint | UI / comportamiento |
+|----------|---------------------|
+| `POST /auth/login` | `/login`, `/trabajador/login` |
+| `POST /auth/refresh` | `AuthBootstrap`, interceptor 401 |
+| `POST /auth/logout` | SideNavBar / layouts |
+| `GET /auth/me` | `syncUser`, `/account` |
+| `POST /auth/change-password` | `/account` |
 
-### 4.2 Persistencia local
+### 3.2 Actividades
 
-- Borradores trabajador ([`worker-form-draft.ts`](somosbarrio-frontend/src/features/worker/lib/worker-form-draft.ts)), notas, defaults bitácora hardcodeados.
-- **`logout`**: `localStorage.clear()` borra notas/borradores además de auth.
+| Endpoint | Estado integración |
+|----------|-------------------|
+| `GET /activities` | Listado, home, selects |
+| `POST /activities` | Alta en `/activities/new` **OK** |
+| `GET`, `PUT /activities/{id}` | Edición con React Query |
+| `DELETE /activities/{id}` | Listado (admin) |
+| `PATCH .../status` | **Sin UI** |
 
-### 4.3 Integraciones rotas o legacy
+### 3.3 Documentos y mailing
 
-- **`CreateActivityPage`**: `api.post('/api/v1/activities', …)` → doble prefijo (listado ya usa `GET /activities` correctamente).
-- **Alta actividad envía `status` en body**: el backend ignora o valida según DTO (`CreateActivityRequest` no incluye `status`; estado inicial lo fija servidor).
-- **Contraseña temporal en alta usuario**: valor fijo en UI; flujo institucional con **`change-password`** existe pero no está enlazado al alta.
-- **`FALLBACK_ACTIVITY_ID`**: UUID fijo si no hay actividades en BD ([`useDefaultActivityId`](somosbarrio-frontend/src/features/worker/hooks/useDefaultActivityId.ts)).
+- CRUD, workflow, adjuntos, PDF, preview-docx — completo.
+- `POST /documents/{id}/send`, `GET .../email-logs` — [`DocumentMailPanel`](somosbarrio-frontend/src/features/mailing/components/DocumentMailPanel.tsx).
 
-### 4.4 Código sin cablear
+### 3.4 Plantillas, usuarios, reportes, auditoría
 
-- `useCreateActivity`, `useChangeActivityStatus`: definidos, **sin página** que los use.
-- `uiStore`, `WorkerMyRecordsPage`: sin uso en router activo.
+| Módulo | Endpoints | Pantalla |
+|--------|-----------|----------|
+| Plantillas | GET + CRUD | `/document-templates` (admin) |
+| Usuarios | GET, POST, PUT, DELETE | `/users` (admin) |
+| Reportes Excel | `/reports/documents`, `/reports/activities` | `/reports` (admin) |
+| Auditoría | `GET /audit-logs` | `/audit-logs` (admin) |
+
+### 3.5 Repositorio
+
+| Capa | Estado |
+|------|--------|
+| Cliente + UI | [`RepositoryPage`](somosbarrio-frontend/src/features/repository/pages/RepositoryPage.tsx) en `/repository` |
+
+### 3.6 Actas
+
+| Ámbito | Rutas UI | API |
+|--------|----------|-----|
+| Admin | `/minutes`, `/minutes/:id` | list, detail, PUT, DELETE, status, adjuntos |
+| Colaborador (shell moderno) | `/mis-actas` | mismos endpoints vía worker pages |
+| Colaborador (shell clásico) | `/trabajador/actas` | creación + adjuntos + `EN_REVISION` |
+
+### 3.7 Flujos colaborador (documentos como informe/bitácora)
+
+- `/mis-reportes` o `/trabajador/reportes` → plantilla `INFORME_TIPO` (env).
+- `/trabajador/bitacora` → plantilla bitácora (env).
 
 ---
 
-## 5. Desajustes de contrato y bloqueadores técnicos
+## 4. Qué cumple el backend sin UI equivalente
 
-| Tema | Síntoma | Acción recomendada |
-|------|---------|-------------------|
-| **Doble prefijo solo en alta actividad** | `CreateActivityPage` → 404 | `api.post('/activities', …)` o `useCreateActivity()` |
-| **JWT expirado** | Backend `TOKEN_EXPIRED`; interceptor ignora | Añadir `TOKEN_EXPIRED` junto a `TOKEN_INVALID` en [`axios.ts`](somosbarrio-frontend/src/shared/lib/axios.ts) |
-| **Código fantasma `AUTH_TOKEN_EXPIRED`** | Nunca lo emite el backend | Eliminar o mantener por compatibilidad futura |
-| **Paginación usuarios** | `getAll()` trae `content` sin query `page`/`size` | Opcional: paginar en cliente o pasar params Spring |
-| **Campo activo** | UI `enabled` vs API `isActive` | Ya mapeado en `users.api.ts`; mantener al editar |
-| **Puerto proxy** | `.env.example` → **8080**; Compose → **8081** | Actualizar `.env.example` o documentar en README front |
-| **Logout scope** | `localStorage.clear()` | Limpiar solo claves `sb-*` |
+| Ítem | Notas |
+|------|-------|
+| `PATCH /activities/{id}/status` | Solo servidor + cliente sin pantalla |
+| `GET .../attachments` (listados aislados docs/actas) | Detalle trae adjuntos en DTO; funciones list no usadas en UI |
+| `POST /minutes` desde admin | Sin `/minutes/new` institucional |
+| Upload `.docx` plantillas | Diseño intencional: `templateFilePath` + `TEMPLATE_ROOT` |
+| Notas trabajador | `localStorage` en `/trabajador/notas` |
+
+---
+
+## 5. Desajustes de contrato (actualizados)
+
+| Tema | Estado | Acción si aplica |
+|------|--------|------------------|
+| Doble prefijo actividades | **Resuelto** | — |
+| `TOKEN_EXPIRED` en interceptor | **Resuelto** | — |
+| `AuthBootstrap` | **Activo** | — |
+| Ruta `/repository` | **Roto** | Añadir ruta en `router.tsx` |
+| Paginación `GET /users` | Front carga todo `content` | Opcional: query `page`/`size` |
+| `enabled` vs `isActive` | Mapeado en `users.api.ts` | Mantener al editar |
+| Proxy `.env.example` | **8080** vs Compose **8081** | Actualizar ejemplo |
+| Logout | `localStorage.clear()` | Acotar claves `sb-*` |
 
 ---
 
 ## 6. Matriz de cobertura por módulo
 
-| Módulo | Backend | Frontend UI | Integración |
-|--------|---------|-------------|-------------|
-| Auth | 5 endpoints | 5 consumidos | ~95 % (bootstrap/refresh fino pendiente) |
-| Usuarios | GET, POST, PUT, DELETE | Completo admin | ~95 % |
-| Actividades | CRUD + status + DELETE | List/edit/delete; alta rota; sin PATCH status UI | ~75 % |
-| Documentos + adjuntos + mail | Completo | Completo + panel mail | ~95 % |
-| Plantillas | GET + CRUD admin | CRUD admin (sin upload docx) | ~85 % |
+| Módulo | Backend | UI | Integración |
+|--------|---------|-----|-------------|
+| Auth | 5 | 5 | ~98 % |
+| Usuarios | CRUD | CRUD admin | ~95 % |
+| Actividades | CRUD + status + DELETE | Falta PATCH status UI | ~90 % |
+| Documentos + mail | Completo | Completo | ~98 % |
+| Plantillas | CRUD | CRUD admin | ~90 % |
 | Repositorio | GET búsqueda | `/repository` | ~90 % |
-| Mailing grupos | CRUD + deactivate | `/recipient-groups` | ~95 % |
-| Actas | CRUD + adjuntos + estados | Admin list/detail + worker create | ~80 % |
-| Reportes | Excel docs + actividades | Ambos en admin | ~100 % |
-| Auditoría | GET logs admin | `/audit-logs` | ~90 % |
+| Mailing grupos | CRUD | `/recipient-groups` | ~95 % |
+| Actas | CRUD + adjuntos | Admin + worker + `/mis-actas` | ~85 % |
+| Reportes | 2 Excel | Admin ambos | ~100 % |
+| Auditoría | GET | `/audit-logs` | ~95 % |
 
 ---
 
-## 7. Roadmap hacia integración completa
+## 7. Roadmap residual
 
-### Fase 1 — Correcciones críticas (cliente)
-
-1. Corregir **`CreateActivityPage`** (POST relativo `/activities`).
-2. Tratar **`TOKEN_EXPIRED`** en interceptor; reactivar lógica **`AuthBootstrap`**.
-3. UI **`PATCH /activities/{id}/status`** (admin) o integrar en edición.
-4. Alinear **`.env.example`** con puerto Compose **8081**.
-
-### Fase 2 — Completitud operativa
-
-1. Alta de actas en portal admin (opcional producto).
-2. Scope de **logout** sin borrar notas/borradores.
-3. Enlace alta usuario → **`change-password`** obligatorio.
-4. Decisión producto: notas trabajador (local vs API).
-
-### Fase 3 — Mejoras opcionales
-
-1. Upload `.docx` plantillas (requiere endpoint backend nuevo).
-2. Paginación server-side en listados grandes (usuarios, actividades legacy).
-3. Tests E2E front (Vitest/Playwright).
+1. UI cambio de estado actividad (`PATCH /status`) para admin.
+3. Alinear **`.env.example`** a puerto **8081**.
+4. Logout sin borrar notas/borradores locales.
+5. (Producto) upload `.docx` o API notas trabajador.
 
 ---
 
-## 8. Auditoría rápida endpoint → estado UI
+## 8. Auditoría endpoint → UI
 
 | Recurso `/api/v1` | Cliente | Pantalla |
 |-------------------|---------|----------|
-| Auth (5) | Sí | Sí (`/account` incluido) |
-| Users CRUD | Sí | Sí (`AdminRoute`) |
-| Actividades GET/PUT/DELETE | Sí | Sí |
-| Actividades POST | Parcial | **Roto** en `/activities/new` |
-| Actividades PATCH status | Sí (sin UI) | No |
+| Auth (5) | Sí | Sí |
+| Users CRUD | Sí | Sí |
+| Activities GET/POST/PUT/DELETE | Sí | Sí |
+| Activities PATCH status | Sí | **No** |
 | Documentos + adjuntos + workflow + pdf + preview | Sí | Sí |
-| Documentos send + email-logs | Sí | Sí (detalle) |
-| Plantillas CRUD + GET id | Sí | Sí (admin) |
-| Repositorio GET | Sí | Sí |
-| Reports documents + activities | Sí | Sí (admin) |
-| Minutes admin + worker | Sí | Sí |
-| Recipient-groups CRUD | Sí | Sí (admin) |
-| Audit-logs GET | Sí | Sí (admin) |
+| send + email-logs | Sí | Sí |
+| Plantillas CRUD | Sí | Sí |
+| Repositorio GET | Sí | Sí (`/repository`) |
+| Reports (2) | Sí | Sí (admin) |
+| Minutes | Sí | Sí |
+| Recipient-groups | Sí | Sí |
+| Audit-logs | Sí | Sí |
 
 ---
 
-## 9. Referencias cruzadas
+## 9. Referencias
 
 | Documento | Ruta |
 |-----------|------|
 | Análisis frontend | [`ANALISIS_FRONTEND.md`](ANALISIS_FRONTEND.md) |
-| Pruebas backend (Postman F1–F12) | [`../BACKEND/somosbarrio-backend/pruebas-backend.md`](../BACKEND/somosbarrio-backend/pruebas-backend.md) |
-| Esquema BD Flyway | [`../BACKEND/somosbarrio-backend/docs/database_schema.md`](../BACKEND/somosbarrio-backend/docs/database_schema.md) |
-| README backend (puertos, M4–M8) | [`../BACKEND/somosbarrio-backend/README.md`](../BACKEND/somosbarrio-backend/README.md) |
+| **Guía pruebas integración (E2E local)** | [`GUIA_PRUEBAS_INTEGRACION.md`](GUIA_PRUEBAS_INTEGRACION.md) |
+| Pruebas backend Postman | [`../BACKEND/somosbarrio-backend/pruebas-backend.md`](../BACKEND/somosbarrio-backend/pruebas-backend.md) |
+| README backend | [`../BACKEND/somosbarrio-backend/README.md`](../BACKEND/somosbarrio-backend/README.md) |
+| Esquema BD | [`../BACKEND/somosbarrio-backend/docs/database_schema.md`](../BACKEND/somosbarrio-backend/docs/database_schema.md) |
 
 **Fuente normativa en runtime:** `/v3/api-docs` y Swagger UI con backend levantado.
