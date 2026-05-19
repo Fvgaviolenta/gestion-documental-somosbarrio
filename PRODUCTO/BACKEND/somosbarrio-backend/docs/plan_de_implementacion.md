@@ -423,7 +423,7 @@ Esta sección es **idéntica** a la versión anterior porque el setup técnico n
 | JDK Temurin | 21 (solo si se corre backend fuera de Docker) |
 | Editor | VS Code recomendado |
 
-Puertos a tener libres: **5173, 8080, 5432, 5050**.
+Puertos a tener libres: **5173, 8081, 5432, 5050** (`8081` = backend expuesto por `docker-compose` del repo backend; dentro del contenedor la app usa `8380`. Si ejecutas `./mvnw spring-boot:run` sin Compose, típicamente usas **`8380`**, no es necesario dejar libre `8081`).
 
 ### 7.2 Clonado
 
@@ -454,7 +454,7 @@ cd ../somosbarrio-frontend
 cp .env.example .env
 ```
 
-Por defecto: `VITE_API_URL=http://localhost:8080/api/v1`.
+Con el backend levantado vía Compose en este repo, el SPA debe apuntar a `VITE_API_URL=http://localhost:8081/api/v1`.
 
 ### 7.4 Levantar el sistema
 
@@ -466,9 +466,10 @@ docker compose logs -f backend
 ```
 
 **Smoke test**:
-1. `http://localhost:5173` → ver login.
-2. Login con `admin@somosbarrio.cl` / `Admin123!`.
-3. Confirmar dashboard con sidebar de los módulos del MVP.
+1. `http://localhost:5173` → ver login (SPA con `VITE_API_URL=http://localhost:8081/api/v1` cuando el backend va por Compose).
+2. Comprobar `http://localhost:8081/actuator/health` (o `:8380` si corres solo `./mvnw spring-boot:run`).
+3. Login en el SPA con `admin@somosbarrio.cl` / `Admin123!`.
+4. Confirmar dashboard con sidebar de los módulos del MVP.
 
 ### 7.5 Usuarios seed (perfil `dev`)
 
