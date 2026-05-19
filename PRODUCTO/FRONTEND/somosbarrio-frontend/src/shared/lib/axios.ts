@@ -20,7 +20,6 @@ api.interceptors.request.use((config) => {
     }
   }
   
-  // Hacemos lo mismo para el X-Correlation-Id
   if (config.headers.set) {
     config.headers.set('X-Correlation-Id', crypto.randomUUID())
   } else {
@@ -36,25 +35,38 @@ api.interceptors.response.use(
   (r) => r,
   async (error) => {
     const original = error.config
+    
+    // Captura la respuesta de error del backend de Spring Boot
+    const serverCode = error.response?.data?.code
+    const serverMessage = error.response?.data?.message
+
     if (
       axios.isAxiosError(error) &&
       error.response?.status === 401 &&
-      (error.response?.data?.code === 'AUTH_TOKEN_EXPIRED' || error.response?.data?.code === 'TOKEN_INVALID') &&
+      (serverCode === 'TOKEN_EXPIRED' || 
+       serverCode === 'TOKEN_INVALID' || 
+       serverMessage === 'TOKEN_EXPIRED' ||
+       serverCode === 'AUTH_TOKEN_EXPIRED') &&
       original &&
       !original._retry
     ) {
       original._retry = true
+      
+      // Control de concurrencia seguro para peticiones en paralelo
       refreshing ??= useAuthStore.getState().refresh()
       const newToken = await refreshing
       refreshing = null
+      
       if (newToken) {
         if (original.headers.set) {
           original.headers.set('Authorization', `Bearer ${newToken}`)
         } else {
           original.headers.Authorization = `Bearer ${newToken}`
         }
-        return api(original)
+        return api(original) // Reintenta la petición original con el nuevo token
       }
+      
+      // Si falla la renovación del refresh token, se cierra la sesión limpiamente
       useAuthStore.getState().logout()
       window.location.href = '/login'
     }
