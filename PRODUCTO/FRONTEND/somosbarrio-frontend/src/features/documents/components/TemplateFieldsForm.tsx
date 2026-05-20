@@ -1,4 +1,5 @@
 import type { TemplateFieldDefinition } from '../types'
+import { isImageUuidFieldKey } from '../lib/template-fields'
 
 const fieldClass =
   'w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-2 text-sm outline-none ring-[var(--color-primary)] focus:ring-2'
@@ -26,7 +27,7 @@ export function TemplateFieldsForm({
 
   return (
     <div className="space-y-4">
-      {fields.map((field) => {
+      {fields.filter((field) => !isImageUuidFieldKey(field.key)).map((field) => {
         const id = `field-${field.key}`
         const value = values[field.key] ?? ''
 

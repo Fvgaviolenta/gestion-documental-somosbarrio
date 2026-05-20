@@ -1,0 +1,4 @@
+# Videos de documentación: no versionar (superan límite de GitHub).
+*.mp4
+*.mov
+*.avi

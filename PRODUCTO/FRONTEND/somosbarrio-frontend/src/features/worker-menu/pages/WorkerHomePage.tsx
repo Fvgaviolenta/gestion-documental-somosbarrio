@@ -2,19 +2,14 @@ import { Link } from 'react-router-dom'
 
 const sections = [
   {
-    to: '/trabajador/reportes',
-    title: 'Reporte rápido',
-    description: 'Envío de reportes y evidencias desde terreno.',
+    to: '/documents/new',
+    title: 'Documentos',
+    description: 'Informes y trámites con plantillas institucionales.',
   },
   {
     to: '/trabajador/bitacora',
     title: 'Bitácora terreno',
     description: 'Registro diario de actividades en el territorio.',
-  },
-  {
-    to: '/trabajador/actas',
-    title: 'Actas de actividades',
-    description: 'Actas de reuniones y compromisos con la comunidad.',
   },
 ] as const
 

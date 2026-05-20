@@ -20,13 +20,16 @@ import {
 } from '@/features/documents/hooks/useDocuments'
 import { useDocumentTemplates } from '@/features/documents/hooks/useDocumentTemplates'
 import {
+  assignImageAttachmentToFields,
   buildFieldValuesJson,
+  listImageUuidFieldKeys,
   parseFieldValuesJson,
   parseTemplateFields,
 } from '@/features/documents/lib/template-fields'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Button } from '@/shared/components/ui/button'
 import { formatDateOnly } from '@/shared/lib/formatters'
+import type { DocumentAttachmentDto } from '@/features/documents/types'
 import { useAuthStore } from '@/store/authStore'
 
 const inputClass =
@@ -65,6 +68,7 @@ export function DocumentDetailPage() {
     const template = templatesQuery.data?.find((t) => t.id === doc?.templateId)
     return parseTemplateFields(template?.fieldsSchema)
   }, [templatesQuery.data, doc?.templateId])
+  const imageFieldKeys = useMemo(() => listImageUuidFieldKeys(templateFields), [templateFields])
 
   useEffect(() => {
     if (!doc) return
@@ -80,6 +84,19 @@ export function DocumentDetailPage() {
       { title: title.trim(), fieldValues: buildFieldValuesJson(fieldValues) },
       {
         onSuccess: () => setMessage('Documento actualizado.'),
+        onError: (err) => setError(formatError(err)),
+      },
+    )
+  }
+
+  const onImageUploaded = (attachment: DocumentAttachmentDto) => {
+    if (!canEdit || imageFieldKeys.length === 0) return
+    const linked = assignImageAttachmentToFields(fieldValues, attachment.id, imageFieldKeys)
+    if (linked === fieldValues) return
+    setFieldValues(linked)
+    updateMutation.mutate(
+      { title: title.trim(), fieldValues: buildFieldValuesJson(linked) },
+      {
         onError: (err) => setError(formatError(err)),
       },
     )
@@ -192,6 +209,7 @@ export function DocumentDetailPage() {
         canEdit={canEditAttachments}
         onMessage={setMessage}
         onError={setError}
+        onImageUploaded={onImageUploaded}
       />
 
       <DocumentMailPanel

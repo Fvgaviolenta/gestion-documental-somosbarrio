@@ -277,7 +277,7 @@ export function HomePage() {
                                 Bienvenido al portal institucional de <strong>Somos Barrio</strong>. Desde este panel tienes accesos directos adaptados a tus operaciones en terreno para la zona de <strong>Miraflores</strong>.
                             </p>
                             <p className="text-sm text-on-surface-variant/80 mt-2">
-                                Usa el menú izquierdo o los accesos rápidos para registrar incidencias, redactar actas del comité o revisar los documentos vigentes de la salida territorial.
+                                Usa el menú izquierdo o los accesos rápidos para crear documentos con plantilla o revisar los trámites vigentes de la salida territorial.
                             </p>
                         </div>
                     )}
@@ -297,9 +297,9 @@ export function HomePage() {
                                     ]
                                     : [
                                         { icon: 'description', label: 'Docs', path: '/documents' },
-                                        { icon: 'assignment', label: 'Actas', path: '/mis-actas' },
-                                        { icon: 'campaign', label: 'Reportes', path: '/mis-reportes' },
+                                        { icon: 'add', label: 'Nuevo', path: '/documents/new' },
                                         { icon: 'folder_open', label: 'Actividades', path: '/activities' },
+                                        { icon: 'person', label: 'Cuenta', path: '/account' },
                                     ]
                                 ).map((item) => (
                                     <button

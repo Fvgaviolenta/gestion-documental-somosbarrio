@@ -37,8 +37,8 @@ public class DocumentPdfGenerationServiceImpl implements DocumentPdfGenerationSe
     @Override
     public String mergePreviewDocx(DocumentEntity document) {
         Path templatePath = resolveTemplateFile(document);
-        Map<String, String> vars = JsonFieldFlattener.flatten(document.getFieldValues(), objectMapper);
         Map<UUID, Path> imagePaths = loadImageAttachments(document.getId());
+        Map<String, String> vars = prepareMergeVars(document, imagePaths);
 
         String relativeDir = "documents/previews/" + document.getId();
         String mergedName = GeneratedDocumentFilenames.previewMergedDocxFileName(document);
@@ -50,8 +50,8 @@ public class DocumentPdfGenerationServiceImpl implements DocumentPdfGenerationSe
     @Override
     public String generateAndStorePdf(DocumentEntity document) {
         Path templatePath = resolveTemplateFile(document);
-        Map<String, String> vars = JsonFieldFlattener.flatten(document.getFieldValues(), objectMapper);
         Map<UUID, Path> imagePaths = loadImageAttachments(document.getId());
+        Map<String, String> vars = prepareMergeVars(document, imagePaths);
 
         String typeFolder = document.getTemplate().getDocumentType().name();
         String relativeDir = "documents/generated/" + typeFolder + "/" + document.getId();
@@ -127,6 +127,13 @@ public class DocumentPdfGenerationServiceImpl implements DocumentPdfGenerationSe
                     "No se pudo completar la plantilla Word: " + ex.getMessage(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private Map<String, String> prepareMergeVars(DocumentEntity document, Map<UUID, Path> imagePaths) {
+        Map<String, String> vars = JsonFieldFlattener.flatten(document.getFieldValues(), objectMapper);
+        String fieldsSchema = document.getTemplate() != null ? document.getTemplate().getFieldsSchema() : null;
+        ImageFieldValuesEnricher.enrich(vars, imagePaths, fieldsSchema, objectMapper);
+        return vars;
     }
 
     private Map<UUID, Path> loadImageAttachments(UUID documentId) {
