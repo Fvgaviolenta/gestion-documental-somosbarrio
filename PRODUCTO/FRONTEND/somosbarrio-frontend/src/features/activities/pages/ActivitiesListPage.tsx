@@ -51,7 +51,7 @@ export function ActivitiesListPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteActivity,
     onSuccess: () => setReloadKey((k) => k + 1),
-    onError: () => setError('No se pudo eliminar la actividad (puede tener actas vinculadas).'),
+    onError: () => setError('No se pudo eliminar la actividad (puede tener documentos vinculados).'),
   })
 
   useEffect(() => {
@@ -189,7 +189,7 @@ export function ActivitiesListPage() {
                           className="rounded-lg bg-surface-variant p-2 text-sb-red transition-colors hover:bg-error-container/30 disabled:opacity-40"
                           disabled={deleteMutation.isPending}
                           onClick={() => {
-                            if (window.confirm('¿Eliminar esta actividad? No se puede deshacer si hay actas vinculadas.')) {
+                            if (window.confirm('¿Eliminar esta actividad? No se puede deshacer si hay documentos vinculados.')) {
                               deleteMutation.mutate(String(activity.id))
                             }
                           }}

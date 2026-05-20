@@ -2,6 +2,13 @@ import { api } from '@/shared/lib/axios'
 import { downloadBlob, filenameFromContentDisposition } from '@/shared/lib/download'
 import type { PagedResponse } from '@/shared/types/api'
 
+import {
+  assignImageAttachmentToFields,
+  buildFieldValuesJson,
+  isImageFile,
+  parseFieldValuesJson,
+} from '../lib/template-fields'
+
 import type {
   CreateDocumentPayload,
   DocumentAttachmentDto,
@@ -138,10 +145,29 @@ export async function downloadDocumentPreviewDocx(documentId: string): Promise<v
 export async function createDocumentWithAttachments(
   payload: CreateDocumentPayload,
   files: File[],
+  imageFieldKeys: string[] = [],
 ): Promise<DocumentDto> {
-  const document = await createDocument(payload)
+  let document = await createDocument(payload)
+  let fieldValues = parseFieldValuesJson(payload.fieldValues ?? document.fieldValues)
+  let fieldValuesChanged = false
+
   for (const file of files) {
-    await uploadDocumentAttachment(document.id, file)
+    const attachment = await uploadDocumentAttachment(document.id, file)
+    if (isImageFile(file) && imageFieldKeys.length > 0) {
+      const linked = assignImageAttachmentToFields(fieldValues, attachment.id, imageFieldKeys)
+      if (linked !== fieldValues) {
+        fieldValues = linked
+        fieldValuesChanged = true
+      }
+    }
   }
+
+  if (fieldValuesChanged) {
+    document = await updateDocument(document.id, {
+      title: document.title,
+      fieldValues: buildFieldValuesJson(fieldValues),
+    })
+  }
+
   return document
 }

@@ -8,6 +8,7 @@ import { createDocumentWithAttachments } from '@/features/documents/api/document
 import { useDocumentTemplates } from '@/features/documents/hooks/useDocumentTemplates'
 import {
   buildFieldValuesJson,
+  listImageUuidFieldKeys,
   parseTemplateFields,
 } from '@/features/documents/lib/template-fields'
 import { PageHeader } from '@/shared/components/PageHeader'
@@ -29,6 +30,13 @@ export function CreateDocumentPage() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [error, setError] = useState<string | null>(null)
 
+  const selectedTemplate = templatesQuery.data?.find((t) => t.id === templateId)
+  const templateFields = useMemo(
+    () => parseTemplateFields(selectedTemplate?.fieldsSchema),
+    [selectedTemplate?.fieldsSchema],
+  )
+  const imageFieldKeys = useMemo(() => listImageUuidFieldKeys(templateFields), [templateFields])
+
   const createMutation = useMutation({
     mutationFn: () =>
       createDocumentWithAttachments(
@@ -39,6 +47,7 @@ export function CreateDocumentPage() {
           fieldValues: buildFieldValuesJson(fieldValues),
         },
         pendingFiles,
+        imageFieldKeys,
       ),
     onSuccess: async (doc) => {
       await queryClient.invalidateQueries({ queryKey: ['documents'] })
@@ -50,12 +59,6 @@ export function CreateDocumentPage() {
     queryKey: ['activities', 'picker'],
     queryFn: () => getActivities({ page: 0, size: 100 }),
   })
-
-  const selectedTemplate = templatesQuery.data?.find((t) => t.id === templateId)
-  const templateFields = useMemo(
-    () => parseTemplateFields(selectedTemplate?.fieldsSchema),
-    [selectedTemplate?.fieldsSchema],
-  )
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -169,7 +172,12 @@ export function CreateDocumentPage() {
         ) : null}
 
         <div className="border-t border-[var(--color-border)] pt-4">
-          <label className="mb-1 block text-sm font-medium">Adjuntos (opcional)</label>
+          <label className="mb-1 block text-sm font-medium">
+            Imágenes / adjuntos (opcional)
+          </label>
+          <p className="mb-2 text-xs text-[var(--color-muted-foreground)]">
+            Las imágenes se vinculan automáticamente a la plantilla Word (marcador IMG).
+          </p>
           <input
             type="file"
             multiple

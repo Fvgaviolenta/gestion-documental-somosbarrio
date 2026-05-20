@@ -59,16 +59,7 @@ export default function SideNavBar() {
                     <span className="text-sm font-semibold">Documentos</span>
                 </Link>
 
-                {/* 4. Actas (Dividido por rol pero dentro del menú moderno) */}
-                <Link 
-                    to={isAdmin ? "/minutes" : "/mis-actas"} 
-                    className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${(isAdmin ? isActivePrefix('/minutes') : isActivePrefix('/mis-actas')) ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
-                >
-                    <span className="material-symbols-outlined">assignment</span>
-                    <span className="text-sm font-semibold">Actas</span>
-                </Link>
-
-                {/* 5. Plantillas (Solo Admin) */}
+                {/* 4. Plantillas (Solo Admin) */}
                 {isAdmin && (
                     <Link to="/document-templates" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/document-templates') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                         <span className="material-symbols-outlined">article</span>
@@ -100,15 +91,10 @@ export default function SideNavBar() {
                     </Link>
                 )}
                 
-                {/* 9. Reportes (Dividido por rol) */}
-                {isAdmin ? (
+                {/* 9. Reportes (solo administrador — export Excel actividades) */}
+                {isAdmin && (
                     <Link to="/reports" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActive('/reports') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
                         <span className="material-symbols-outlined">bar_chart</span>
-                        <span className="text-sm font-semibold">Reportes</span>
-                    </Link>
-                ) : (
-                    <Link to="/mis-reportes" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActivePrefix('/mis-reportes') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
-                        <span className="material-symbols-outlined">campaign</span>
                         <span className="text-sm font-semibold">Reportes</span>
                     </Link>
                 )}

@@ -7,6 +7,7 @@ import {
 } from '@/features/documents/hooks/useDocuments'
 import { formatFileSize } from '@/features/documents/lib/format-file-size'
 import type { DocumentAttachmentDto } from '@/features/documents/types'
+import { isImageFile } from '@/features/documents/lib/template-fields'
 import { Button } from '@/shared/components/ui/button'
 
 interface DocumentAttachmentsPanelProps {
@@ -15,6 +16,7 @@ interface DocumentAttachmentsPanelProps {
   canEdit: boolean
   onMessage?: (text: string) => void
   onError?: (text: string) => void
+  onImageUploaded?: (attachment: DocumentAttachmentDto) => void
 }
 
 export function DocumentAttachmentsPanel({
@@ -23,6 +25,7 @@ export function DocumentAttachmentsPanel({
   canEdit,
   onMessage,
   onError,
+  onImageUploaded,
 }: DocumentAttachmentsPanelProps) {
   const uploadMutation = useUploadDocumentAttachment(documentId)
   const deleteMutation = useDeleteDocumentAttachment(documentId)
@@ -106,7 +109,16 @@ export function DocumentAttachmentsPanel({
               const file = e.target.files?.[0]
               if (!file) return
               uploadMutation.mutate(file, {
-                onSuccess: () => onMessage?.('Adjunto subido.'),
+                onSuccess: (attachment) => {
+                  onMessage?.(
+                    isImageFile(file)
+                      ? 'Imagen subida y vinculada a la plantilla.'
+                      : 'Adjunto subido.',
+                  )
+                  if (isImageFile(file)) {
+                    onImageUploaded?.(attachment)
+                  }
+                },
                 onError: () => onError?.('No se pudo subir el archivo.'),
               })
               e.target.value = ''

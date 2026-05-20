@@ -15,15 +15,11 @@ import { DocumentTemplatesPage } from '@/features/document-templates/pages/Docum
 import { RecipientGroupsPage } from '@/features/mailing/pages/RecipientGroupsPage'
 import { RepositoryPage } from '@/features/repository/pages/RepositoryPage'
 import { AdminReportsPage } from '@/features/reports/pages/AdminReportsPage'
-import { WorkerReportsPage } from '@/features/reports/pages/WorkerReportsPage'
 import { WorkerConfigPage } from '@/features/worker-menu/pages/WorkerConfigPage'
 import { WorkerHelpPage } from '@/features/worker-menu/pages/WorkerHelpPage'
 import { WorkerHomePage } from '@/features/worker-menu/pages/WorkerHomePage'
 import { WorkerNotesPage } from '@/features/worker-menu/pages/WorkerNotesPage'
 import { WorkerLogbookPage } from '@/features/worker-logbook/pages/WorkerLogbookPage'
-import { MinuteDetailPage } from '@/features/minutes/pages/MinuteDetailPage'
-import { MinutesListPage } from '@/features/minutes/pages/MinutesListPage'
-import { WorkerMinutesPage } from '@/features/worker-minutes/pages/WorkerMinutesPage'
 
 import { AdminRoute } from './AdminRoute'
 import { AppLayout } from './layouts/AppLayout'
@@ -61,11 +57,11 @@ export const router = createBrowserRouter([
       { path: 'documents', element: <DocumentsListPage /> },
       { path: 'documents/new', element: <CreateDocumentPage /> },
       { path: 'documents/:id', element: <DocumentDetailPage /> },
-      { path: 'minutes', element: <MinutesListPage /> },
-      { path: 'minutes/:id', element: <MinuteDetailPage /> },
-      
-      { path: 'mis-reportes', element: <WorkerReportsPage /> },
-      { path: 'mis-actas', element: <WorkerMinutesPage /> },
+      { path: 'minutes', element: <Navigate to="/documents" replace /> },
+      { path: 'minutes/:id', element: <Navigate to="/documents" replace /> },
+      { path: 'mis-actas', element: <Navigate to="/documents/new" replace /> },
+
+      { path: 'mis-reportes', element: <Navigate to="/documents/new" replace /> },
 
       { path: 'repository', element: <RepositoryPage /> },
       {
@@ -94,9 +90,9 @@ export const router = createBrowserRouter([
       { path: 'configuracion', element: <WorkerConfigPage /> },
       { path: 'ayuda', element: <WorkerHelpPage /> },
       { path: 'notas', element: <WorkerNotesPage /> },
-      { path: 'reportes', element: <WorkerReportsPage /> },
+      { path: 'reportes', element: <Navigate to="/documents/new" replace /> },
       { path: 'bitacora', element: <WorkerLogbookPage /> },
-      { path: 'actas', element: <WorkerMinutesPage /> },
+      { path: 'actas', element: <Navigate to="/documents/new" replace /> },
     ],
   },
   
