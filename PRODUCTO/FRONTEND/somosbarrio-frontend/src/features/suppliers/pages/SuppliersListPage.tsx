@@ -5,7 +5,16 @@ import {
   useSuppliers, useCreateSupplier, useUpdateSupplier,
   useDeleteSupplier, useChangeSupplierStatus,
 } from '@/features/suppliers/hooks/useSuppliers'
-import type { Supplier, SupplierStatus } from '@/features/suppliers/api/suppliers.api'
+import type { CreateSupplierRequest, Supplier, SupplierStatus, UpdateSupplierRequest } from '@/features/suppliers/api/suppliers.api'
+
+function formatRut(value: string): string {
+  const clean = value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9)
+  if (clean.length === 0) return ''
+  const body = clean.slice(0, -1)
+  const dv = clean.slice(-1)
+  const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return dv ? `${formatted}-${dv}` : formatted
+}
 
 const PAGE_SIZE = 10
 
@@ -50,7 +59,7 @@ function ConfirmDialog({ message, confirmLabel, confirmClass, onConfirm, onCance
           <button onClick={onCancel} disabled={isLoading} className="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-high disabled:opacity-40 transition-colors text-sm font-medium">
             Cancelar
           </button>
-          <button onClick={onConfirm} disabled={isLoading} className={`px-4 py-2 rounded-lg text-on-primary hover:opacity-90 disabled:opacity-40 transition-colors text-sm font-medium flex items-center gap-2 ${confirmClass || 'bg-primary'}`}>
+          <button onClick={onConfirm} disabled={isLoading} className={`px-4 py-2 rounded-lg text-white hover:opacity-90 disabled:opacity-40 transition-colors text-sm font-medium flex items-center gap-2 ${confirmClass || 'bg-primary'}`}>
             {isLoading && <span>⏳</span>}
             {confirmLabel}
           </button>
@@ -90,6 +99,7 @@ export function SuppliersListPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [changingStatus, setChangingStatus] = useState<{ id: string; status: SupplierStatus } | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [openStatusMenu, setOpenStatusMenu] = useState<string | null>(null)
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type })
@@ -115,7 +125,7 @@ export function SuppliersListPage() {
   const handleOpenEdit = (supplier: Supplier) => { setEditingSupplier(supplier); setShowForm(true) }
   const handleCloseForm = () => { setShowForm(false); setEditingSupplier(null); createMutation.reset(); updateMutation.reset() }
 
-  const handleSubmitForm = (formData: any) => {
+  const handleSubmitForm = (formData: CreateSupplierRequest | UpdateSupplierRequest) => {
     if (editingSupplier) {
       updateMutation.mutate({ id: editingSupplier.id, data: formData }, {
         onSuccess: () => { handleCloseForm(); showToast('Proveedor actualizado correctamente') },
@@ -166,7 +176,7 @@ export function SuppliersListPage() {
         </select>
       </div>
 
-      <div className="rounded-xl border border-outline-variant overflow-hidden bg-surface">
+      <div className="rounded-xl border border-outline-variant overflow-visible bg-surface">
         {isLoading ? (
           <div className="p-6"><TableSkeleton /></div>
         ) : isError ? (
@@ -183,7 +193,7 @@ export function SuppliersListPage() {
             {(search || statusFilter) && <button onClick={() => { setSearch(''); setStatusFilter('') }} className="mt-3 text-sm text-primary hover:underline">Limpiar filtros</button>}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-visible">
             <table className="w-full">
               <thead className="border-b border-outline-variant bg-surface-container-highest">
                 <tr>
@@ -199,7 +209,7 @@ export function SuppliersListPage() {
                 {suppliers.map((supplier) => (
                   <tr key={supplier.id} className="hover:bg-surface-container-lowest transition-colors">
                     <td className="px-4 py-3 text-sm text-on-surface font-medium">{supplier.nombreProveedor}</td>
-                    <td className="px-4 py-3 text-sm text-on-surface-variant">{supplier.rutEmpresa}</td>
+                    <td className="px-4 py-3 text-sm text-on-surface-variant">{formatRut(supplier.rutEmpresa)}</td>
                     <td className="px-4 py-3 text-sm text-on-surface-variant">{supplier.emailContacto}</td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex flex-wrap gap-1">
@@ -212,15 +222,38 @@ export function SuppliersListPage() {
                     <td className="px-4 py-3 text-sm"><SupplierStatusBadge status={supplier.status} /></td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-1">
-                        <div className="relative group">
-                          <button className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">↔️</button>
-                          <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col bg-surface border border-outline-variant rounded-lg shadow-lg z-20">
-                            {NEXT_STATUS[supplier.status].map((opt) => (
-                              <button key={opt.value} onClick={() => setChangingStatus({ id: supplier.id, status: opt.value })} className="px-3 py-2 text-xs text-left hover:bg-surface-container-high text-on-surface whitespace-nowrap">
-                                {opt.label}
-                              </button>
-                            ))}
-                          </div>
+                        <div className="relative">
+                          <button
+                            title="Cambiar estado"
+                            onClick={() => setOpenStatusMenu(openStatusMenu === supplier.id ? null : supplier.id)}
+                            className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                          >
+                            ↔️
+                          </button>
+                          {openStatusMenu === supplier.id && (
+                            <div className="fixed flex flex-col bg-surface border border-outline-variant rounded-lg shadow-lg z-50 min-w-max"
+                              style={{
+                                bottom: 'auto',
+                                right: 'auto',
+                              }}
+                            >
+                              <span className="px-3 pt-2 pb-1 text-xs font-semibold text-on-surface-variant border-b border-outline-variant">
+                                Cambiar estado
+                              </span>
+                              {NEXT_STATUS[supplier.status].map((opt) => (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => {
+                                    setChangingStatus({ id: supplier.id, status: opt.value })
+                                    setOpenStatusMenu(null)
+                                  }}
+                                  className="px-3 py-2 text-xs text-left hover:bg-surface-container-high text-primary hover:text-primary whitespace-nowrap"
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <button onClick={() => handleOpenEdit(supplier)} className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">✏️</button>
                         <button onClick={() => setDeletingId(supplier.id)} className="p-1.5 rounded-lg text-on-surface-variant hover:text-red-500 hover:bg-red-50 transition-colors">🗑️</button>
@@ -250,7 +283,7 @@ export function SuppliersListPage() {
             onSubmit={handleSubmitForm} 
             onCancel={handleCloseForm} 
             isLoading={createMutation.isPending || updateMutation.isPending}
-            serverError={(createMutation.error || updateMutation.error) as any as string}
+            serverError={(createMutation.error || updateMutation.error)?.message}
           />
         </Modal>
       )}
