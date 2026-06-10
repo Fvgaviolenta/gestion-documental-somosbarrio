@@ -28,6 +28,7 @@ import { WorkerLayout } from './layouts/WorkerLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { WorkerRoute } from './WorkerRoute'
 import { UsersListPage } from '@/features/users/pages/UsersListPage'
+import { SuppliersListPage } from '@/features/suppliers/pages/SuppliersListPage'
 
 export const router = createBrowserRouter([
   {
@@ -72,6 +73,7 @@ export const router = createBrowserRouter([
           { path: 'recipient-groups', element: <RecipientGroupsPage /> },
           { path: 'audit-logs', element: <AuditLogsPage /> },
           { path: 'users', element: <UsersListPage /> },
+          { path: 'suppliers', element: <SuppliersListPage /> },
         ],
       },
     ],

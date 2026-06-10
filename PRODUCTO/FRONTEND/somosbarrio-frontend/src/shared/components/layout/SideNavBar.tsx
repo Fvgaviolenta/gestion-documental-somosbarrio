@@ -106,6 +106,14 @@ export default function SideNavBar() {
                         <span className="text-sm font-semibold">Gestión Usuarios</span>
                     </Link>
                 )}
+
+                {/* 11. Gestión Proveedores (Solo Admin) */}
+                {isAdmin && (
+                    <Link to="/suppliers" className={`flex items-center gap-3 px-3 py-2 transition-colors duration-200 rounded-lg ${isActivePrefix('/suppliers') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`}>
+                        <span className="material-symbols-outlined">business</span>
+                        <span className="text-sm font-semibold">Proveedores</span>
+                    </Link>
+                )}
             </nav>
             
             <div className="mt-auto pt-stack-md border-t border-outline-variant space-y-1">
