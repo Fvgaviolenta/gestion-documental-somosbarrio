@@ -1,8 +1,30 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/features/suppliers/api/suppliers.api'
 
+function formatRut(value: string): string {
+  console.log('formatRut input:', value)
+  const clean = value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9)
+  console.log('formatRut clean:', clean) 
+  if (clean.length === 0) return ''
+  const body = clean.slice(0, -1)
+  const dv = clean.slice(-1)
+  const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  const result = dv ? `${formatted}-${dv}` : formatted
+  console.log('formatRut result:', result)
+  return result
+}
+
+function formatPhone(value: string): string {
+  const clean = value.replace(/[^\d+]/g, '').slice(0, 12)
+  if (clean.startsWith('+56')) {
+    const rest = clean.slice(3).replace(/(\d{1})(\d{4})(\d{0,4})/, '$1 $2 $3').trim()
+    return '+56 ' + rest
+  }
+  return clean
+}
+
 function validateRut(rut: string): boolean {
-  const clean = rut.replace(/[.\-]/g, '').toUpperCase()
+  const clean = rut.replace(/[.-]/g, '').toUpperCase()
   if (clean.length < 8) return false
   const body = clean.slice(0, -1)
   const dv = clean.slice(-1)
@@ -76,32 +98,19 @@ interface SupplierFormProps {
 
 export function SupplierForm({ initialData, onSubmit, onCancel, isLoading, serverError }: SupplierFormProps) {
   const isEditing = !!initialData
+  
   const [form, setForm] = useState<FormData>({
-    nombreProveedor: initialData?.nombreProveedor ?? '',
-    rutEmpresa: initialData?.rutEmpresa ?? '',
-    emailContacto: initialData?.emailContacto ?? '',
-    telefonoContacto: initialData?.telefonoContacto ?? '',
-    direccion: initialData?.direccion ?? '',
-    giros: initialData?.giros ?? [],
-    idLicitaciones: initialData?.idLicitaciones ?? [],
-    ordenesCompra: initialData?.ordenesCompra ?? [],
+  nombreProveedor: initialData?.nombreProveedor ?? '',
+  rutEmpresa: formatRut(initialData?.rutEmpresa ?? ''),
+  emailContacto: initialData?.emailContacto ?? '',
+  telefonoContacto: initialData?.telefonoContacto ?? '',
+  direccion: initialData?.direccion ?? '',
+  giros: initialData?.giros ?? [],
+  idLicitaciones: initialData?.idLicitaciones ?? [],
+  ordenesCompra: initialData?.ordenesCompra ?? [],
   })
+  
   const [errors, setErrors] = useState<FormErrors>({})
-
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        nombreProveedor: initialData.nombreProveedor,
-        rutEmpresa: initialData.rutEmpresa,
-        emailContacto: initialData.emailContacto,
-        telefonoContacto: initialData.telefonoContacto ?? '',
-        direccion: initialData.direccion ?? '',
-        giros: initialData.giros,
-        idLicitaciones: initialData.idLicitaciones,
-        ordenesCompra: initialData.ordenesCompra,
-      })
-    }
-  }, [initialData?.id])
 
   const set = (field: keyof FormData, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -125,7 +134,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading, serve
     if (!validate()) return
     onSubmit({
       nombreProveedor: form.nombreProveedor.trim(),
-      rutEmpresa: form.rutEmpresa.trim(),
+      rutEmpresa: form.rutEmpresa.replace(/\./g, '').trim(),
       emailContacto: form.emailContacto.trim(),
       telefonoContacto: form.telefonoContacto.trim() || undefined,
       direccion: form.direccion.trim() || undefined,
@@ -159,7 +168,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading, serve
           <label className="text-xs font-semibold text-on-surface mb-1 block">
             RUT Empresa <span className="text-red-500">*</span>
           </label>
-          <input type="text" value={form.rutEmpresa} onChange={(e) => set('rutEmpresa', e.target.value)} placeholder="12.345.678-9" disabled={isLoading} className={inputClass('rutEmpresa')} />
+          <input type="text" value={form.rutEmpresa} onChange={(e) => set('rutEmpresa', formatRut(e.target.value))} placeholder="12.345.678-9" disabled={isLoading} className={inputClass('rutEmpresa')} />
           {errors.rutEmpresa && <span className="text-xs text-red-500">{errors.rutEmpresa}</span>}
         </div>
       </div>
@@ -175,7 +184,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading, serve
 
         <div>
           <label className="text-xs font-semibold text-on-surface mb-1 block">Teléfono</label>
-          <input type="text" value={form.telefonoContacto} onChange={(e) => set('telefonoContacto', e.target.value)} placeholder="+56 9 1234 5678" disabled={isLoading} className={inputClass('telefonoContacto')} />
+          <input type="text" value={form.telefonoContacto} onChange={(e) => set('telefonoContacto', formatPhone(e.target.value))} placeholder="+56 9 1234 5678" disabled={isLoading} className={inputClass('telefonoContacto')} />
         </div>
       </div>
 
