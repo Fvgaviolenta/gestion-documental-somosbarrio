@@ -6,6 +6,7 @@ import {
   useDeleteSupplier, useChangeSupplierStatus,
 } from '@/features/suppliers/hooks/useSuppliers'
 import type { CreateSupplierRequest, Supplier, SupplierStatus, UpdateSupplierRequest } from '@/features/suppliers/api/suppliers.api'
+import type { AxiosError } from 'axios'
 
 function formatRut(value: string): string {
   const clean = value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9)
@@ -69,6 +70,21 @@ function ConfirmDialog({ message, confirmLabel, confirmClass, onConfirm, onCance
   )
 }
 
+function InfoDialog({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="w-96 rounded-xl bg-surface shadow-lg p-6">
+        <p className="text-sm text-on-surface mb-6">{message}</p>
+        <div className="flex justify-end">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium">
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TableSkeleton() {
   return (
     <div className="space-y-2">
@@ -100,6 +116,7 @@ export function SuppliersListPage() {
   const [changingStatus, setChangingStatus] = useState<{ id: string; status: SupplierStatus } | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [openStatusMenu, setOpenStatusMenu] = useState<string | null>(null)
+  const [suspendedDeleteAttempt, setSuspendedDeleteAttempt] = useState(false)
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type })
@@ -141,7 +158,12 @@ export function SuppliersListPage() {
     if (!deletingId) return
     deleteMutation.mutate(deletingId, {
       onSuccess: () => { setDeletingId(null); showToast('Proveedor eliminado') },
-      onError: () => { setDeletingId(null); showToast('No se pudo eliminar el proveedor', 'error') },
+      onError: (error: Error) => {
+        setDeletingId(null)
+        const axiosError = error as AxiosError<{ message?: string }>
+        const message = axiosError.response?.data?.message || 'No se pudo eliminar el proveedor'
+        showToast(message, 'error')
+      },
     })
   }
 
@@ -256,7 +278,16 @@ export function SuppliersListPage() {
                           )}
                         </div>
                         <button onClick={() => handleOpenEdit(supplier)} className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">✏️</button>
-                        <button onClick={() => setDeletingId(supplier.id)} className="p-1.5 rounded-lg text-on-surface-variant hover:text-red-500 hover:bg-red-50 transition-colors">🗑️</button>
+                        <button
+                        onClick={() => {
+                          if (supplier.status === 'SUSPENDIDO') {
+                            setSuspendedDeleteAttempt(true)
+                          } else {
+                            setDeletingId(supplier.id)
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-on-surface-variant hover:text-red-500 hover:bg-red-50 transition-colors">🗑️
+                      </button>
                       </div>
                     </td>
                   </tr>
@@ -304,6 +335,12 @@ export function SuppliersListPage() {
           onConfirm={handleConfirmStatus} 
           onCancel={() => setChangingStatus(null)} 
           isLoading={statusMutation.isPending} 
+        />
+      )}
+        {suspendedDeleteAttempt && (
+        <InfoDialog
+          message="No se puede eliminar un proveedor con estado SUSPENDIDO. Cambie el estado primero."
+          onClose={() => setSuspendedDeleteAttempt(false)}
         />
       )}
     </div>
