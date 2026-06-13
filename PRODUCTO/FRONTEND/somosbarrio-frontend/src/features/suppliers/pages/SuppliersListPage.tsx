@@ -320,7 +320,7 @@ export function SuppliersListPage() {
       )}
       {deletingId && (
         <ConfirmDialog 
-          message="¿Estás seguro de que deseas eliminar este proveedor? Esta acción no se puede deshacer." 
+          message={`¿Estás seguro de que deseas eliminar a "${suppliers.find(s => s.id === deletingId)?.nombreProveedor}"? Esta acción no se puede revertir.`} 
           confirmLabel="Eliminar"
           confirmClass="bg-red-600 hover:bg-red-700"
           onConfirm={handleConfirmDelete} 
