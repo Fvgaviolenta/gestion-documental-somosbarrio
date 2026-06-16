@@ -95,6 +95,21 @@ function TableSkeleton() {
   )
 }
 
+function CollectionTags({ items, emptyLabel = '—' }: { items: string[]; emptyLabel?: string }) {
+  if (items.length === 0) {
+    return <span className="text-xs text-on-surface-variant">{emptyLabel}</span>
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {items.slice(0, 2).map((item) => (
+        <span key={item} className="inline-block px-2 py-1 bg-surface-container rounded text-xs text-on-surface">{item}</span>
+      ))}
+      {items.length > 2 && <span className="text-xs text-on-surface-variant">+{items.length - 2}</span>}
+    </div>
+  )
+}
+
 function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
   const bgClass = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
   const textClass = type === 'success' ? 'text-green-700' : 'text-red-700'
@@ -190,7 +205,7 @@ export function SuppliersListPage() {
       </div>
 
       <div className="flex gap-3">
-        <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} placeholder="Buscar por nombre, RUT o email..." className="flex-1 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/30" />
+        <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} placeholder="Buscar por nombre, RUT, licitación u orden de compra..." className="flex-1 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/30" />
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as SupplierStatus | ''); setPage(0) }} className="rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/30">
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -223,6 +238,8 @@ export function SuppliersListPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant">RUT</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant">Email</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant">Giros</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant">Licitaciones</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant">Órdenes de compra</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant">Estado</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant">Acciones</th>
                 </tr>
@@ -234,12 +251,13 @@ export function SuppliersListPage() {
                     <td className="px-4 py-3 text-sm text-on-surface-variant">{formatRut(supplier.rutEmpresa)}</td>
                     <td className="px-4 py-3 text-sm text-on-surface-variant">{supplier.emailContacto}</td>
                     <td className="px-4 py-3 text-sm">
-                      <div className="flex flex-wrap gap-1">
-                        {supplier.giros.slice(0, 2).map((g) => (
-                          <span key={g} className="inline-block px-2 py-1 bg-surface-container rounded text-xs text-on-surface">{g}</span>
-                        ))}
-                        {supplier.giros.length > 2 && <span className="text-xs text-on-surface-variant">+{supplier.giros.length - 2}</span>}
-                      </div>
+                      <CollectionTags items={supplier.giros} />
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <CollectionTags items={supplier.idLicitaciones ?? []} />
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <CollectionTags items={supplier.ordenesCompra ?? []} />
                     </td>
                     <td className="px-4 py-3 text-sm"><SupplierStatusBadge status={supplier.status} /></td>
                     <td className="px-4 py-3 text-sm">

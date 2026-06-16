@@ -13,6 +13,8 @@ import cl.somosbarrio.backend.suppliers.entity.SupplierEntity;
 import cl.somosbarrio.backend.suppliers.entity.SupplierStatus;
 import cl.somosbarrio.backend.suppliers.mapper.SupplierMapper;
 import cl.somosbarrio.backend.suppliers.repository.SupplierRepository;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,10 +46,20 @@ public class SupplierServiceImpl implements SupplierService {
                 predicates.add(cb.equal(root.get("status"), status));
             }
             if (search != null && !search.isBlank()) {
+                query.distinct(true);
                 String term = "%" + search.toLowerCase() + "%";
+                String rutTerm = "%" + search + "%";
+
+                Join<SupplierEntity, String> licitacionesJoin =
+                        root.join("idLicitaciones", JoinType.LEFT);
+                Join<SupplierEntity, String> ordenesJoin =
+                        root.join("ordenesCompra", JoinType.LEFT);
+
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("nombreProveedor")), term),
-                        cb.like(root.get("rutEmpresa"), "%" + search + "%")
+                        cb.like(root.get("rutEmpresa"), rutTerm),
+                        cb.like(cb.lower(licitacionesJoin), term),
+                        cb.like(cb.lower(ordenesJoin), term)
                 ));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
@@ -74,12 +87,12 @@ public class SupplierServiceImpl implements SupplierService {
         supplier.setEmailContacto(request.getEmailContacto());
         supplier.setTelefonoContacto(request.getTelefonoContacto());
         supplier.setDireccion(request.getDireccion());
-        supplier.getGiros().addAll(request.getGiros());
+        supplier.getGiros().addAll(deduplicate(request.getGiros()));
         if (request.getIdLicitaciones() != null) {
-            supplier.getIdLicitaciones().addAll(request.getIdLicitaciones());
+            supplier.getIdLicitaciones().addAll(deduplicate(request.getIdLicitaciones()));
         }
         if (request.getOrdenesCompra() != null) {
-            supplier.getOrdenesCompra().addAll(request.getOrdenesCompra());
+            supplier.getOrdenesCompra().addAll(deduplicate(request.getOrdenesCompra()));
         }
 
         SupplierEntity saved = supplierRepository.save(supplier);
@@ -105,16 +118,16 @@ public class SupplierServiceImpl implements SupplierService {
         supplier.setDireccion(request.getDireccion());
 
         supplier.getGiros().clear();
-        supplier.getGiros().addAll(request.getGiros());
+        supplier.getGiros().addAll(deduplicate(request.getGiros()));
 
         supplier.getIdLicitaciones().clear();
         if (request.getIdLicitaciones() != null) {
-            supplier.getIdLicitaciones().addAll(request.getIdLicitaciones());
+            supplier.getIdLicitaciones().addAll(deduplicate(request.getIdLicitaciones()));
         }
 
         supplier.getOrdenesCompra().clear();
         if (request.getOrdenesCompra() != null) {
-            supplier.getOrdenesCompra().addAll(request.getOrdenesCompra());
+            supplier.getOrdenesCompra().addAll(deduplicate(request.getOrdenesCompra()));
         }
 
         return supplierMapper.toDto(supplierRepository.save(supplier));
@@ -155,5 +168,9 @@ public class SupplierServiceImpl implements SupplierService {
     private SupplierEntity getOrThrow(UUID id) {
         return supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Proveedor", id));
+    }
+
+    private List<String> deduplicate(List<String> values) {
+        return new ArrayList<>(new LinkedHashSet<>(values));
     }
 }
