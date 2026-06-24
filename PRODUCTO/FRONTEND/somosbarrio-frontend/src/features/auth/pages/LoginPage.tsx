@@ -3,11 +3,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import axios from 'axios'
 import { useForm } from 'react-hook-form'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import { Button } from '@/shared/components/ui/button'
 import type { ApiErrorBody } from '@/shared/types/api'
 import { APP_NAME } from '@/shared/lib/constants'
+import type { Role } from '@/shared/types/enums'
+import { resolvePostLoginPath } from '@/features/auth/lib/resolvePostLoginPath'
 import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/login.schema'
 import { useAuthStore } from '@/store/authStore'
 
@@ -19,11 +21,7 @@ export function LoginPage() {
   const login = useAuthStore((s) => s.login)
   const [showPassword, setShowPassword] = useState(false)
 
-  const from = (() => {
-    const s = location.state as { from?: string } | undefined
-    if (s?.from && s.from !== '/login') return s.from
-    return '/'
-  })()
+  const from = (location.state as { from?: string } | undefined)?.from
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -32,14 +30,22 @@ export function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: async ({ email, password }: LoginFormValues) => {
-      // Directo al backend sin pasar por cortocircuitos mock
       await login(email, password)
+      const loggedInUser = useAuthStore.getState().user
+      if (!loggedInUser?.roles.length) {
+        await useAuthStore.getState().logout()
+        throw new Error('Tu cuenta no tiene un perfil asignado.')
+      }
     },
-    onSuccess: () => navigate(from, { replace: true }),
+    onSuccess: () => {
+      const loggedInUser = useAuthStore.getState().user
+      if (!loggedInUser) return
+      navigate(resolvePostLoginPath(loggedInUser.roles as Role[], from), { replace: true })
+    },
   })
 
   if (accessToken && user) {
-    return <Navigate to="/" replace />
+    return <Navigate to={resolvePostLoginPath(user.roles as Role[], from)} replace />
   }
 
   const serverMessage = (() => {
@@ -64,7 +70,7 @@ export function LoginPage() {
           {APP_NAME}
         </h1>
         <p className="mt-2 text-sm text-[var(--color-muted-foreground)]">
-          Gestión documental — inicia sesión
+          Ingresa con tu correo institucional
         </p>
       </div>
 
@@ -132,16 +138,6 @@ export function LoginPage() {
           {mutation.isPending ? 'Entrando…' : 'Entrar'}
         </Button>
       </form>
-
-      <p className="mt-4 text-center text-sm text-[var(--color-muted-foreground)]">
-        ¿Eres trabajador en terreno?{' '}
-        <Link
-          to="/trabajador/login"
-          className="font-medium text-[#1565c0] underline decoration-[#1565c0] transition-colors hover:text-black hover:decoration-black"
-        >
-          Iniciar sesión aquí
-        </Link>
-      </p>
     </div>
   )
 }

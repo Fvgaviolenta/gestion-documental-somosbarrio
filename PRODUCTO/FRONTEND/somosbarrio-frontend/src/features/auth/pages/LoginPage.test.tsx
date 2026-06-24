@@ -44,6 +44,25 @@ describe('LoginPage', () => {
     expect(useAuthStore.getState().hasRole('ADMINISTRADOR')).toBe(true)
   })
 
+  it('logs in colaborador and navigates to institutional dashboard', async () => {
+    const user = userEvent.setup()
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<div>Panel Territorial</div>} />
+      </Routes>,
+      { routerProps: { initialEntries: ['/login'] } },
+    )
+
+    await user.type(screen.getByLabelText('Correo'), 'colaborador1@somosbarrio.cl')
+    await user.type(screen.getByLabelText('Contraseña'), 'Admin123!')
+    await user.click(screen.getByRole('button', { name: /entrar/i }))
+
+    expect(await screen.findByText('Panel Territorial')).toBeInTheDocument()
+    expect(useAuthStore.getState().hasRole('COLABORADOR')).toBe(true)
+  })
+
   it('shows server error on invalid credentials', async () => {
     const user = userEvent.setup()
 

@@ -1,7 +1,6 @@
 ﻿import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { LoginPage } from '@/features/auth/pages/LoginPage'
-import { WorkerLoginPage } from '@/features/auth/pages/WorkerLoginPage'
 import { ActivitiesListPage } from '@/features/activities/pages/ActivitiesListPage'
 import { CreateActivityPage } from '@/features/activities/pages/CreateActivityPage'
 import { EditActivityPage } from '@/features/activities/pages/EditActivityPage'
@@ -38,8 +37,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/trabajador/login',
-    element: <AuthLayout />,
-    children: [{ index: true, element: <WorkerLoginPage /> }],
+    element: <Navigate to="/login" replace />,
   },
   
   {

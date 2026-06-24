@@ -86,7 +86,7 @@ export function WorkerLayout() {
 
   const handleLogout = async () => {
     await logout()
-    navigate('/trabajador/login', { replace: true })
+    navigate('/login', { replace: true })
   }
 
   const linkIsActive = (item: (typeof menuLinks)[number]) => {

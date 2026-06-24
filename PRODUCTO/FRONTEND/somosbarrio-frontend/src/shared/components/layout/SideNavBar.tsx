@@ -22,7 +22,7 @@ export default function SideNavBar() {
 
     const handleLogout = async () => {
         await logout();
-        navigate(isAdmin ? '/login' : '/trabajador/login', { replace: true });
+        navigate('/login', { replace: true });
     };
 
     return (
