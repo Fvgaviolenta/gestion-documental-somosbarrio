@@ -14,6 +14,7 @@ Frontend de la **Plataforma de Gestión Documental Somos Barrio** para la Subsec
 - Axios (Cliente HTTP con interceptores de ciclo de vida)
 - Material Symbols (Iconografía institucional)
 - ESLint + Prettier (Estilo de código y linting)
+- Vitest + React Testing Library + MSW (Tests unitarios y de componente, API simulada)
 
 ## Setup local (primera vez)
 
@@ -124,6 +125,11 @@ npm run preview
 
 # Ejecutar el Linter para comprobar errores de estilo de código
 npm run lint
+
+# Tests automatizados (Vitest + React Testing Library + MSW, sin backend)
+npm test          # modo watch
+npm run test:run  # una corrida (CI)
+npm run test:ui   # interfaz visual
 
 ```
 
