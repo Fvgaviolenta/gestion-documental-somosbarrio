@@ -37,17 +37,20 @@ export function useCreateUser() {
 }
 
 /**
- * Hook para eliminar/deshabilitar un usuario del sistema.
+ * Hook para desactivar un usuario del sistema (soft delete en backend).
  */
-export function useDeleteUser() {
+export function useDeactivateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => usersApi.delete(id),
+    mutationFn: (id: string) => usersApi.deactivate(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: userKeys.all });
     },
   });
 }
+
+/** @deprecated Usar useDeactivateUser */
+export const useDeleteUser = useDeactivateUser;
 
 export function useUpdateUser() {
   const qc = useQueryClient();

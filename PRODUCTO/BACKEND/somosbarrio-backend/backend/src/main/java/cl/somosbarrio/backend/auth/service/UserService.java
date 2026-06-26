@@ -16,5 +16,5 @@ public interface UserService {
 
     UserDto update(UUID id, UpdateUserRequest request);
 
-    void deactivate(UUID id);
+    void deactivate(UUID id, UUID actorId);
 }

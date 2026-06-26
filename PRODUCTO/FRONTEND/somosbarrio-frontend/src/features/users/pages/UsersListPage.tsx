@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios'; 
-import { useUsers, useDeleteUser, useCreateUser, useUpdateUser } from '../hooks/useUsers';
+import { useUsers, useDeactivateUser, useCreateUser, useUpdateUser } from '../hooks/useUsers';
 import type { User } from '../api/users.api';
 import { SB_COLORS } from '@/shared/constants/colors';
 import { RoleCheckboxes } from '@/shared/components/RoleCheckboxes';
@@ -8,7 +8,7 @@ import type { ApiErrorBody } from '@/shared/types/api';
 
 export function UsersListPage() {
     const { data: users, isLoading, error } = useUsers();
-    const deleteUserMutation = useDeleteUser();
+    const deactivateUserMutation = useDeactivateUser();
     const createUserMutation = useCreateUser();
     const updateUserMutation = useUpdateUser();
 
@@ -26,6 +26,7 @@ export function UsersListPage() {
     const [fullName, setFullName] = useState('');
     const [createRoles, setCreateRoles] = useState<string[]>(['COLABORADOR']);
     const [formError, setFormError] = useState<string | null>(null);
+    const [deactivateError, setDeactivateError] = useState<string | null>(null);
 
     const filteredUsers = users?.filter(user => {
         const emailMatch = user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -115,16 +116,19 @@ export function UsersListPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (window.confirm('¿Estás seguro de que deseas deshabilitar a este usuario?')) {
-            try {
-                try {
-                    await deleteUserMutation.mutateAsync(id);
-                } catch (e) {
-                    console.error('Error al dar de baja al usuario:', e);
-                }
-            } catch (e) {
-                console.error('Error al dar de baja al usuario:', e);
+    const handleDeactivate = async (id: string) => {
+        if (!window.confirm('¿Estás seguro de que deseas deshabilitar a este usuario?')) {
+            return;
+        }
+        setDeactivateError(null);
+        try {
+            await deactivateUserMutation.mutateAsync(id);
+        } catch (err) {
+            if (axios.isAxiosError(err) && err.response) {
+                const data = err.response.data as ApiErrorBody | undefined;
+                setDeactivateError(data?.message ?? 'No se pudo deshabilitar el usuario.');
+            } else {
+                setDeactivateError('No se pudo deshabilitar el usuario.');
             }
         }
     };
@@ -154,6 +158,12 @@ export function UsersListPage() {
                         </button>
                     </div>
                 </section>
+
+                {deactivateError && (
+                    <div className="mb-stack-md rounded-xl bg-error-container p-stack-md text-on-error-container border border-error/30" role="alert">
+                        {deactivateError}
+                    </div>
+                )}
 
                 {editingUser && (
                     <form onSubmit={handleUpdateUser} className="mb-stack-lg bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl shadow-md">
@@ -325,9 +335,9 @@ export function UsersListPage() {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleDelete(user.id)}
-                                                            disabled={!user.enabled || deleteUserMutation.isPending}
-                                                            className={`p-1.5 rounded-lg inline-flex items-center justify-center transition-colors ${user.enabled && !deleteUserMutation.isPending ? 'text-sb-red hover:bg-error-container/30 cursor-pointer' : 'text-zinc-300 cursor-not-allowed'}`}
+                                                            onClick={() => handleDeactivate(user.id)}
+                                                            disabled={!user.enabled || deactivateUserMutation.isPending}
+                                                            className={`p-1.5 rounded-lg inline-flex items-center justify-center transition-colors ${user.enabled && !deactivateUserMutation.isPending ? 'text-sb-red hover:bg-error-container/30 cursor-pointer' : 'text-zinc-300 cursor-not-allowed'}`}
                                                             title="Deshabilitar usuario"
                                                         >
                                                             <span className="material-symbols-outlined text-[20px]">person_remove</span>

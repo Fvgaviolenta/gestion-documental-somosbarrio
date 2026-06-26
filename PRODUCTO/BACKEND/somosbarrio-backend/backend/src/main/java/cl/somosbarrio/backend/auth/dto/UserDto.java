@@ -1,5 +1,6 @@
 package cl.somosbarrio.backend.auth.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,5 +16,7 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private Set<String> roles;
+
+    @JsonProperty("isActive")
     private boolean isActive;
 }

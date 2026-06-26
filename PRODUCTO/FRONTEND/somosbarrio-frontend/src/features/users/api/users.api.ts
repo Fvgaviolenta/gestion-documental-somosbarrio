@@ -25,42 +25,47 @@ export interface UpdateUserDTO {
   isActive: boolean
 }
 
-function mapUser(raw: {
+type UserApiRaw = {
   id: string
   email: string
   firstName?: string
   lastName?: string
   roles: string[]
+  /** Jackson serializa boolean isActive como "active" */
+  active?: boolean
   isActive?: boolean
   enabled?: boolean
-}): User {
+}
+
+function mapUser(raw: UserApiRaw): User {
+  const isEnabled = raw.isActive ?? raw.active ?? raw.enabled ?? true
   return {
     id: raw.id,
     email: raw.email,
     firstName: raw.firstName,
     lastName: raw.lastName,
     roles: raw.roles,
-    enabled: raw.isActive ?? raw.enabled ?? true,
+    enabled: isEnabled,
   }
 }
 
 export const usersApi = {
   getAll: async (): Promise<User[]> => {
-    const response = await api.get<PagedResponse<User>>('/users')
+    const response = await api.get<PagedResponse<UserApiRaw>>('/users')
     return (response.data?.content ?? []).map(mapUser)
   },
 
   create: async (data: CreateUserDTO): Promise<User> => {
-    const response = await api.post<User>('/users', data)
+    const response = await api.post<UserApiRaw>('/users', data)
     return mapUser(response.data)
   },
 
   update: async (id: string, data: UpdateUserDTO): Promise<User> => {
-    const response = await api.put<User>(`/users/${id}`, data)
+    const response = await api.put<UserApiRaw>(`/users/${id}`, data)
     return mapUser(response.data)
   },
 
-  delete: async (id: string): Promise<void> => {
+  deactivate: async (id: string): Promise<void> => {
     await api.delete(`/users/${id}`)
   },
 }

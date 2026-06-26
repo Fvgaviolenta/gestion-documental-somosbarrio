@@ -13,6 +13,9 @@ const STATUS_LABELS: Record<string, string> = {
     CANCELADA: 'CAN.',
 }
 
+/** Altura del área de barras (equivalente a Tailwind h-64) */
+const CHART_BAR_AREA_HEIGHT_PX = 256
+
 type Activity = {
     id: string
     name: string
@@ -243,18 +246,33 @@ export function HomePage() {
                                 <p className="text-xs text-on-surface-variant">Basado en registros actuales</p>
                             </div>
                             <div className="p-stack-md flex-1 min-h-[300px] flex flex-col justify-end">
-                                <div className="flex items-end justify-around h-64 gap-2">
+                                <div
+                                    className="flex items-end justify-around gap-2"
+                                    style={{ height: CHART_BAR_AREA_HEIGHT_PX }}
+                                >
                                     {activityDistribution.map((entry) => {
-                                        const height = loading ? 12 : Math.max((entry.count / maxDistributionValue) * 100, 4)
+                                        const barHeightPx = loading
+                                            ? 12
+                                            : entry.count === 0
+                                              ? 4
+                                              : Math.max(
+                                                    (entry.count / maxDistributionValue) *
+                                                        CHART_BAR_AREA_HEIGHT_PX,
+                                                    8,
+                                                )
                                         return (
-                                            <div key={entry.status} className="group relative flex flex-col items-center">
+                                            <div
+                                                key={entry.status}
+                                                className="group flex h-full flex-1 max-w-16 flex-col items-center justify-end gap-1"
+                                            >
+                                                <span className="text-[11px] font-bold text-sb-dark-purple">
+                                                    {loading ? '...' : entry.count}
+                                                </span>
                                                 <div
-                                                    className={`w-12 rounded-t ${loading ? 'bg-surface-variant/50' : 'bg-sb-purple'}`}
-                                                    style={{ height: `${height}%` }}
+                                                    className={`w-full max-w-12 rounded-t ${loading ? 'bg-surface-variant/50' : 'bg-sb-purple'}`}
+                                                    style={{ height: barHeightPx }}
+                                                    title={`${entry.label}: ${entry.count}`}
                                                 />
-                                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-surface py-1 px-2 text-[10px] font-semibold text-on-surface shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    {loading ? '...' : `${entry.count} und.`}
-                                                </div>
                                             </div>
                                         )
                                     })}

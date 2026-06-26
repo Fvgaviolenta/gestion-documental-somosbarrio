@@ -1,5 +1,7 @@
 package cl.somosbarrio.backend.auth.service;
 
+import cl.somosbarrio.backend.audit.entity.AuditAction;
+import cl.somosbarrio.backend.audit.service.AuditLogService;
 import cl.somosbarrio.backend.auth.dto.CreateUserRequest;
 import cl.somosbarrio.backend.auth.dto.UpdateUserRequest;
 import cl.somosbarrio.backend.auth.dto.UserDto;
@@ -32,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     @Override
     @Transactional(readOnly = true)
@@ -79,11 +82,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void deactivate(UUID id) {
+    public void deactivate(UUID id, UUID actorId) {
+        if (id.equals(actorId)) {
+            throw new BusinessException(ErrorCode.CONFLICT_STATE,
+                    "No puede desactivar su propia cuenta", HttpStatus.CONFLICT);
+        }
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
+        if (!user.isActive()) {
+            throw new ConflictException(ErrorCode.CONFLICT_STATE,
+                    "El usuario ya está inactivo");
+        }
         user.setActive(false);
         userRepository.save(user);
+        auditLogService.log(actorId, AuditAction.UPDATE, "User", id.toString(), null,
+                java.util.Map.of("isActive", "false"));
     }
 
     private Set<RoleEntity> resolveRoles(Set<String> roleNames) {
