@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -50,8 +51,9 @@ public class UsersController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @Operation(summary = "Desactivar usuario (soft)")
-    public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
-        userService.deactivate(id);
+    public ResponseEntity<Void> deactivate(@PathVariable UUID id, Authentication auth) {
+        UUID actorId = UUID.fromString((String) auth.getPrincipal());
+        userService.deactivate(id, actorId);
         return ResponseEntity.noContent().build();
     }
 }

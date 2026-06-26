@@ -1,0 +1,94 @@
+# Orquestación completa de Somos Barrio (base de datos + backend + frontend).
+# Levanta todo el sistema con un solo comando desde la carpeta PRODUCTO/:
+#   docker compose up --build
+#
+# URLs una vez arriba:
+#   Frontend (SPA):     http://localhost:8080
+#   Backend (API REST): http://localhost:8081/api/v1
+#   pgAdmin:            http://localhost:5050
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sb_db
+    environment:
+      POSTGRES_DB: somosbarrio
+      POSTGRES_USER: somosbarrio_app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U somosbarrio_app -d somosbarrio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./BACKEND/somosbarrio-backend/backend
+      dockerfile: Dockerfile
+    container_name: sb_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: somosbarrio
+      DB_USER: somosbarrio_app
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      # Minimo 32 caracteres UTF-8 (ver JwtService). "cambia-esto" rompe el arranque.
+      JWT_SECRET: ${JWT_SECRET:-dev-only-cambia-en-produccion-openssl-rand-base64-64}
+      JWT_ACCESS_TTL_MIN: 15
+      JWT_REFRESH_TTL_DAYS: 7
+      # Origen del frontend dockerizado (las llamadas reales van por proxy same-origin).
+      APP_CORS_ORIGINS: ${APP_CORS_ORIGINS:-http://localhost:8080}
+      UPLOAD_ROOT: /app/uploads
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      TEMPLATE_ROOT: /app/templates
+      LIBREOFFICE_PATH: /usr/bin/soffice
+    ports:
+      - "8081:8380"
+    volumes:
+      - uploads_data:/app/uploads
+      - ./BACKEND/somosbarrio-backend/templates:/app/templates:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8380/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+  frontend:
+    build:
+      context: ./FRONTEND/somosbarrio-frontend
+      dockerfile: Dockerfile
+      args:
+        # URL relativa: Nginx hace proxy de /api hacia el backend (sin CORS).
+        VITE_API_URL: /api/v1
+    container_name: sb_frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sb_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+volumes:
+  db_data:
+  uploads_data:

@@ -1,0 +1,18 @@
+# .gitignore de la carpeta PRODUCTO
+# Objetivo: versionar solo lo necesario para levantar el sistema
+# (docker-compose.yml + .env.example), dejando fuera la documentacion
+# academica y los secretos reales.
+#
+# NOTA: las reglas con "/" al inicio se anclan SOLO a la raiz de PRODUCTO,
+# por lo que NO afectan los .md / .pdf que viven dentro de BACKEND/ y FRONTEND/
+# (READMEs y documentacion tecnica del codigo, que si se versionan).
+
+# --- Documentacion academica / de presentacion (solo en la raiz) ---
+/*.md
+/*.pdf
+
+# --- Secretos de entorno ---
+# Se ignora el .env real (con credenciales), pero NO la plantilla .env.example.
+/.env
+/.env.*
+!/.env.example
